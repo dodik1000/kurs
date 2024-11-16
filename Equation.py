@@ -5,34 +5,50 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import ast
 
+""" Класс для работы с уравнениями и их приближенным интегрированием методом Симпсона """
+
 
 class Equation:
     def __init__(self, frame, parent, fx, a, b, n):
+
+        """ Инициализация уравнения """
+
+        self.parent = parent
+        self.frame = frame
+        self.fx = fx
+        self.y = []
         try:
-            self.parent = parent
-            self.frame = frame
-            self.fx = fx
             self.a = float(a)
             self.b = float(b)
             self.n = int(n)
             self.h = (self.b - self.a) / self.n
             self.x = np.linspace(self.a, self.b, self.n + 1)
-            self.y = []
+
+            try:
+                ast.parse(fx)  # Вызовет SyntaxError, если fx недействителен
+            except SyntaxError:
+                raise ValueError("Синтаксическая ошибка.")
+
+            # Создаем новое пространство имен
             self.local_namespace = {}
+
+            # Импорт функции из модуля math в это пространство имен.
+            # Это необходимо для того, чтобы были доступны математические функции (sin, cos, exp),
+            # которые могут использоваться в выражении функции, введенном пользователем.
             exec("from math import *", self.local_namespace)
 
-            # Validate function syntax BEFORE attempting eval()
-            ast.parse(self.fx)
-
+            # Вычисляем значения функции для каждого x
             for x_val in self.x:
                 self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
                 self.y.append(self.y_value)
-
-        except (NameError, ValueError, SyntaxError, TypeError) as e:  # Added SyntaxError
-            CTkMessagebox(title="Ошибка", message=f"Неверный формат введенных данных: {e}",
-                          width=400, height=200, icon="warning")
+        except (NameError, ValueError, SyntaxError, TypeError) as e:
+            CTkMessagebox(title="Ошибка", message=f"Неверный формат введенных данных: {e}", width=400, height=200,
+                          icon="warning")
 
     def simpson(self):
+
+        """ Вызов функции подсчета и построения графика, вывод результата """
+
         result = self.calculate_simpson()
         if result is not None:
             self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}", font=('Arial Black', 18))
@@ -40,6 +56,9 @@ class Equation:
             self.plot_function()
 
     def calculate_simpson(self):
+
+        """ Расчет интеграла методом Симпсона """
+
         try:
             if not self.y or len(self.y) < 2 or self.n < 1:
                 raise ValueError("Неверный формат введенных данных!")
@@ -63,6 +82,9 @@ class Equation:
             return None
 
     def plot_function(self):
+
+        """ Построение графика функции """
+
         try:
             # Создаем фигуру и график
             fig, ax = plt.subplots(figsize=(4, 3.7))
@@ -73,11 +95,11 @@ class Equation:
             ax.legend()
             ax.grid(True)
 
-            # Удаляем предыдущий график (если он был)
+            # Удаление предыдущего графика (если он был)
             if hasattr(self, "canvas"):
                 self.canvas.get_tk_widget().destroy()
 
-            # Создаем CanvasTkAgg
+            # Создание CanvasTkAgg
             self.canvas = FigureCanvasTkAgg(fig, master=self.frame)
             self.canvas.draw()
             self.canvas.get_tk_widget().grid(row=6, column=0, columnspan=2, sticky='nsew', pady=(0, 10))
