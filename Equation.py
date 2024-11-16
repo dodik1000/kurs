@@ -1,11 +1,9 @@
-"""В этом файле находится код для класса Equation, который
-используется для работы с функцией и её параметрами"""
-
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import ast
 
 
 class Equation:
@@ -13,53 +11,39 @@ class Equation:
         try:
             self.parent = parent
             self.frame = frame
-
             self.fx = fx
             self.a = float(a)
             self.b = float(b)
             self.n = int(n)
-
             self.h = (self.b - self.a) / self.n
             self.x = np.linspace(self.a, self.b, self.n + 1)
-            self.y = []  # Создаем пустой список для y
-
-            # Создаем новое пространство имен
+            self.y = []
             self.local_namespace = {}
-
-            # Импортируем функции из math в новое пространство имен
             exec("from math import *", self.local_namespace)
 
-            # Вычисляем значения функции для каждого x
-            for i in range(len(self.x)):
-                # Исправляем замену x
-                self.y_value = eval(self.fx, {"x": self.x[i]}, self.local_namespace)
-                self.y.append(self.y_value)
-        except NameError:
-            CTkMessagebox(title="Ошибка", message="Некорректный формат введенных данных!", width=300, height=200,
-                          icon="cancel")
+            # Validate function syntax BEFORE attempting eval()
+            ast.parse(self.fx)
 
+            for x_val in self.x:
+                self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
+                self.y.append(self.y_value)
+
+        except (NameError, ValueError, SyntaxError, TypeError) as e:  # Added SyntaxError
+            CTkMessagebox(title="Ошибка", message=f"Неверный формат введенных данных: {e}",
+                          width=400, height=200, icon="warning")
 
     def simpson(self):
-        """Вызывает функцию подсчета определенного интеграла методом Симпсона и отображает результат."""
-
-        # Вычисление интеграла по методу Симпсона
         result = self.calculate_simpson()
-
         if result is not None:
-            self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}",
-                                            font=('Arial Black', 18))
+            self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}", font=('Arial Black', 18))
             self.answer_done.grid(row=5, column=0, columnspan=3, padx=10, pady=(5, 20), sticky="ew")
-
+            self.plot_function()
 
     def calculate_simpson(self):
         try:
-            if not self.y or len(self.y) < 2:  # Некорректный список y
-                raise ValueError("Список значений функции (y) пуст или содержит меньше 2 элементов!")
+            if not self.y or len(self.y) < 2 or self.n < 1:
+                raise ValueError("Неверный формат введенных данных!")
 
-            if self.n < 1:  # Некорректное значение n
-                raise ValueError("Количество интервалов (n) должно быть больше 0!")
-
-            # Вычисление интеграла
             y0 = self.y[0]
             yn = self.y[-1]
             sum_even = 0
@@ -73,9 +57,9 @@ class Equation:
             integral = self.h / 3 * (y0 + yn + 2 * sum_even + 4 * sum_odd)
             return integral
 
-        except ValueError as e:  # Обработка всех ошибок ValueError
-            CTkMessagebox(title="Ошибка ввода", message=f"Неверный формат введенных данных: {e}", width=400, height=200,
-                          icon="cancel")
+        except ValueError:
+            CTkMessagebox(title="Ошибка ввода", message="Неверный формат введенных данных",
+                          width=400, height=200, icon="cancel")
             return None
 
     def plot_function(self):
