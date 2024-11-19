@@ -152,4 +152,3 @@ class Database:
         self.new_window.destroy()
         self.new_window = None
         self.parent.new_window_deleter = None
-
