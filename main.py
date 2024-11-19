@@ -1,9 +1,5 @@
 import customtkinter as ctk
-
-from threading import Timer
-
 from PIL import Image
-
 from Equation import Equation
 from Database import Database
 
@@ -12,17 +8,23 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # configure window
+        '''------------------- НАСТРОЙКА ОКНА -------------------'''
+
         self.title("Калькулятор")
         self.geometry("900x700")
         self.resizable(width=False, height=False)
 
-        # configure grid layout (4x4)
+        # Настройка макета сетки (4x4)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure((2, 3), weight=0)
         self.grid_rowconfigure((0, 1, 2), weight=1)
 
-        self.idle_timer = None  # Таймер для отслеживания бездействия
+        # Таймер для отслеживания бездействия
+        self.idle_timer = None
+        self.new_window_deleter = None
+        self.protocol("WM_DELETE_WINDOW", self.close_program)
+
+        # region : Фреймы для различных частей приложения
 
         self.sidebar_frame = ctk.CTkFrame(self, width=140, corner_radius=0, fg_color="#202020")
         self.main_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#202020")
@@ -32,89 +34,99 @@ class App(ctk.CTk):
         self.about_author_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#202020")
         self.about_program_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#202020")
         self.about_program_group = ctk.CTkFrame(self.about_program_frame, corner_radius=0, fg_color="#202020")
+        # endregion
 
         self.calculate_frame.grid_rowconfigure(7, weight=1)
 
-        # Current frame tracker
+        # Текущий фрейм
         self.current_frame = self.main_frame
 
-        # SIDEBAR FRAME
-        # create sidebar frame with widgets
+        '''------------------- SIDEBAR FRAME -------------------'''
 
+        # region : Размещение фрейма и кнопок боковой панели
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
 
-        # Кнопки навигации
+        # Кнопка "Главная"
         self.main_button = ctk.CTkButton(self.sidebar_frame, text="Главная", fg_color="#7d748e", hover_color="#545164",
                                          command=lambda: self.switch_frames(self.main_frame), width=147, height=30)
         self.main_button.grid(row=0, column=0, padx=20, pady=(10, 0))
 
+        # Кнопка "Калькулятор"
         self.calculate_button = ctk.CTkButton(self.sidebar_frame, text="Калькулятор",
                                               fg_color="#7d748e", hover_color="#545164",
                                               command=lambda: self.switch_frames(self.calculate_frame),
                                               width=147, height=30)
         self.calculate_button.grid(row=1, column=0, padx=20, pady=(10, 0))
 
+        # Кнопка "Об авторе"
         self.about_author_button = ctk.CTkButton(self.sidebar_frame, text="Об авторе",
                                                  fg_color="#7d748e", hover_color="#545164",
                                                  command=lambda: self.switch_frames(self.about_author_frame),
                                                  width=147, height=30)
         self.about_author_button.grid(row=2, column=0, padx=20, pady=(10, 0))
 
+        # Кнопка "О программе"
         self.about_programm_button = ctk.CTkButton(self.sidebar_frame, text="О программе",
                                                    fg_color="#7d748e", hover_color="#545164",
                                                    command=lambda: self.switch_frames(self.about_program_frame),
                                                    width=147, height=30)
         self.about_programm_button.grid(row=3, column=0, padx=20, pady=(10, 0))
 
+        # Кнопка "История вычислений"
         self.recent_button = ctk.CTkButton(self.sidebar_frame, text="История вычислений",
                                            fg_color="#7d748e", hover_color="#545164",
                                            command=self.execute_funcs_history,
                                            width=147, height=30)
         self.recent_button.grid(row=4, column=0, padx=20, pady=(10, 0), sticky="n")
 
-        # Добавляем отступ между кнопками и этикеткой темы
+        # Отступ между кнопками и этикеткой темы
         self.padding_label = ctk.CTkLabel(self.sidebar_frame, text="", anchor="w")
         self.padding_label.grid(row=5, column=0)  # Элемент пустой, используемый для отступа
 
-        # Этикетка для темы
+        # Выбор темы
         self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Тема:", anchor="w")
         self.appearance_mode_label.grid(row=6, column=0, padx=20, pady=(10, 0))
 
-        # Меню выбора темы
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(self.sidebar_frame,
                                                              values=["Светлая", "Темная"],
                                                              command=self.change_theme, fg_color="#7d748e",
                                                              button_color="#7d748e", button_hover_color="#545164")
         self.appearance_mode_optionemenu.grid(row=7, column=0, padx=20, pady=(10, 30))
+        # endregion
 
-        # MAIN FRAME
+        '''------------------- MAIN FRAME -------------------'''
 
+        # Размещение главного фрейма
         self.main_frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
 
+        # Установка темной темы по умолчанию
         ctk.set_appearance_mode("Dark")
         self.appearance_mode_optionemenu.set("Темная")
 
-        # Главное окно !приветствие
-        self.label_uni = ctk.CTkLabel(self.main_frame, text="Белорусский национальный технический университет",
+        # region: Оформление главного окна
+
+        # Название университета, факультета, кафедры
+        self.label_uni = ctk.CTkLabel(self.main_frame, text="Белорусский национальный технический университет"
+                                                            "\n\nФакультет информационных технологий и робототехники"
+                                                            "\n\nПрограммное обеспечение информационных "
+                                                            "систем и технологий",
                                       font=("Arial Black", 16))
-        self.label_uni.grid(pady=10)
-        self.label_fac = ctk.CTkLabel(self.main_frame, text="Факультет информационных технологий и робототехники",
-                                      font=("Arial Black", 16))
-        self.label_fac.grid(pady=(10, 0))
-        self.label_cath = ctk.CTkLabel(self.main_frame, text="Программное обеспечение "
-                                                             "информационных систем и технологий",
-                                       font=("Arial Black", 16))
-        self.label_cath.grid(pady=(0, 70))
+        self.label_uni.grid(pady=(10, 60))
+
+        # Название проекта
         self.label_kurs = ctk.CTkLabel(self.main_frame, text="Курсовой проект", font=("Arial Black", 24))
         self.label_kurs.grid()
         self.label_subject = ctk.CTkLabel(self.main_frame, text="по дисциплине Языки программирования",
                                           font=("Arial Black", 16))
         self.label_subject.grid()
+
+        # Название темы курсового проекта
         self.label_theme = ctk.CTkLabel(self.main_frame, text="Вычисление определенных интегралов методом Симпсона",
                                         font=("Arial Black", 20))
         self.label_theme.grid(pady=(0, 30))
 
+        # Загрузка изображения
         self.image = Image.open("materials/integralcalculator.png")
         self.ctk_image = ctk.CTkImage(light_image=self.image, size=(150, 150))
 
@@ -154,6 +166,7 @@ class App(ctk.CTk):
                                          hover_color="#545164", width=300, height=50, font=("Arial Black", 16),
                                          command=self.close_program)
         self.button_exit.grid(row=0, column=1, padx=10)
+        # endregion
 
         ##############################################################################
         # CALCULATE FRAME
@@ -290,17 +303,21 @@ class App(ctk.CTk):
         self.current_frame = new_frame
 
     def close_program(self):
-        """Closes the main window and exits the program."""
-        if self.idle_timer:
-            self.idle_timer.cancel()
+        if self.new_window_deleter is not None:
+            self.new_window_deleter.destroy()
+        if hasattr(self, 'idle_timer_id'):
+            self.after_cancel(self.idle_timer_id)
+        if hasattr(self, 'close_timer_id'):
+            self.after_cancel(self.close_timer_id)
+        if hasattr(self, 'update_countdown_id'):
+            self.after_cancel(self.update_countdown_id)
         self.destroy()
 
     def execute_functions(self):  # Функция-обертка
         self.eq = Equation(self.calculate_frame, self, self.entry_func.get(), self.entry_a.get(),
                            self.entry_b.get(), self.entry_n.get())
-
         self.eq.simpson()
-        self.eq.plot_function()
+
         self.db = Database(self, self.entry_func.get(), self.entry_a.get(),
                            self.entry_b.get(), self.entry_n.get())
         self.reset_idle_timer()
@@ -308,23 +325,27 @@ class App(ctk.CTk):
         self.db = None
 
     def execute_funcs_history(self):
+        if self.new_window_deleter is not None:
+            self.new_window_deleter.destroy()
         self.switch_frames(self.calculate_frame)
         self.db = Database(self, self.entry_func.get(), self.entry_a.get(),
                            self.entry_b.get(), self.entry_n.get())
-        self.db.history_window()
+        self.new_window_deleter = self.db.history_window()
         self.db = None
 
     def reset_idle_timer(self):
         """Сбрасывает таймер бездействия."""
-        if self.idle_timer:
-            self.idle_timer.cancel()
-        self.idle_timer = Timer(60, self.show_idle_warning)
-        self.idle_timer.start()
+        if hasattr(self, 'idle_timer_id'):
+            self.after_cancel(self.idle_timer_id)
+        self.idle_timer_id = self.after(60000, self.show_idle_warning)
 
     def continue_session(self):
-        self.warning_window.destroy()  # Закрываем окно предупреждения
-        self.reset_idle_timer()  # Сбрасываем таймер
-        self.close_timer.cancel()
+        self.warning_window.destroy()
+        self.reset_idle_timer()
+        if hasattr(self, 'close_timer_id'):
+            self.after_cancel(self.close_timer_id)
+        if hasattr(self, 'update_countdown_id'):
+            self.after_cancel(self.update_countdown_id)
 
     def show_idle_warning(self):
         """Показывает окно с предупреждением о бездействии."""
@@ -334,8 +355,7 @@ class App(ctk.CTk):
         self.warning_window.resizable(width=False, height=False)
         self.seconds_left = 10
         # Таймер для автоматического закрытия
-        self.close_timer = Timer(10, self.close_program)
-        self.close_timer.start()
+        self.close_timer_id = self.after(11000, self.close_program)
 
         self.label_warn = ctk.CTkLabel(self.warning_window, text='Вы были неактивны в течение 60 секунд. Продолжить? '
                                        'Нажмите "Да!" или программа автоматически закроется через',
@@ -350,15 +370,18 @@ class App(ctk.CTk):
                                                 fg_color="#7d748e", hover_color="#545164", height=30)
         self.answer_warn_button.grid(pady=(30, 20), padx=(11, 0), sticky='nsew')
         # Запускаем таймер для обновления обратного отсчета
-        self.update_countdown_timer = Timer(1, self.update_countdown)
-        self.update_countdown_timer.start()
+        self.update_countdown()
 
     def update_countdown(self):
         """Обновляет лейбл обратного отсчета."""
-        self.seconds_left -= 1
-        self.countdown_label.configure(text=f"{self.seconds_left}")
-        self.update_countdown_timer = Timer(1, self.update_countdown)
-        self.update_countdown_timer.start()
+        if self.seconds_left > 0:
+            self.seconds_left -= 1
+            self.countdown_label.configure(text=f"{self.seconds_left}")
+            self.update_countdown_id = self.after(1000, self.update_countdown)  # 1000 мс = 1 секунда
+        else:
+            if hasattr(self, 'update_countdown_id'):
+                self.after_cancel(self.update_countdown_id)
+            self.close_program()
 
 
 if __name__ == "__main__":

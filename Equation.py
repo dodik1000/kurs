@@ -10,13 +10,12 @@ import ast
 
 class Equation:
     def __init__(self, frame, parent, fx, a, b, n):
-
         """ Инициализация уравнения """
-
         self.parent = parent
         self.frame = frame
         self.fx = fx
         self.y = []
+
         try:
             self.a = float(a)
             self.b = float(b)
@@ -46,9 +45,7 @@ class Equation:
                           icon="warning")
 
     def simpson(self):
-
         """ Вызов функции подсчета и построения графика, вывод результата """
-
         result = self.calculate_simpson()
         if result is not None:
             self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}", font=('Arial Black', 18))
@@ -56,9 +53,7 @@ class Equation:
             self.plot_function()
 
     def calculate_simpson(self):
-
         """ Расчет интеграла методом Симпсона """
-
         try:
             if not self.y or len(self.y) < 2 or self.n < 1:
                 raise ValueError("Неверный формат введенных данных!")
@@ -82,25 +77,25 @@ class Equation:
             return None
 
     def plot_function(self):
-
         """ Построение графика функции """
-
         try:
             # Создаем фигуру и график
-            fig, ax = plt.subplots(figsize=(4, 3.7))
-            ax.plot(self.x, self.y, label=self.fx)
-            ax.set_xlabel("x")
-            ax.set_ylabel("y")
-            ax.set_title("График функции")
-            ax.legend()
-            ax.grid(True)
+            self.fig, self.ax = plt.subplots(figsize=(4, 3.7))
+            self.ax.plot(self.x, self.y, label=self.fx)
+            self.ax.set_xlabel("x")
+            self.ax.set_ylabel("y")
+            self.ax.set_title("График функции")
+            self.ax.legend()
+            self.ax.grid(True)
 
             # Удаление предыдущего графика (если он был)
             if hasattr(self, "canvas"):
-                self.canvas.get_tk_widget().destroy()
+                self.canvas.grid_forget()
+                self.canvas.figure.clf()  # Очистка фигуры
+                plt.close(self.canvas.figure)  # Закрытие фигуры
 
             # Создание CanvasTkAgg
-            self.canvas = FigureCanvasTkAgg(fig, master=self.frame)
+            self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame)
             self.canvas.draw()
             self.canvas.get_tk_widget().grid(row=6, column=0, columnspan=2, sticky='nsew', pady=(0, 10))
 
@@ -108,6 +103,7 @@ class Equation:
             self.frame.grid_rowconfigure(6, weight=1)
             self.frame.columnconfigure(0, weight=1)
             self.frame.columnconfigure(1, weight=1)
+            plt.close()
 
         except Exception as e:
             CTkMessagebox(title="Ошибка", message=f"Ошибка при построении графика: {e}",

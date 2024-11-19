@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from openpyxl import load_workbook
+from CTkMessagebox import CTkMessagebox
 
 
 class Database:
@@ -13,6 +14,8 @@ class Database:
         self.a = a
         self.b = b
         self.n = n
+        self.new_win_counter = 0
+
 
     def load_history_data(self):
 
@@ -31,13 +34,12 @@ class Database:
         self.wb.close()
 
     def history_window(self):
-        if self.new_window:
-            self.new_window.destroy()  # Закрываем предыдущее окно истории
         self.new_window = ctk.CTk()
         self.new_window.title("История вычислений")
         self.new_window.geometry("300x600")
         self.new_window.resizable(width=False, height=False)
         self.new_window.deiconify()
+        self.new_window.protocol("WM_DELETE_WINDOW", self.close_history_window)
 
         self.history_frames = []
 
@@ -66,9 +68,10 @@ class Database:
         self.clear_history_button = ctk.CTkButton(self.new_window, text="Очистить историю", command=self.clear_history,
                                                   fg_color="#7d748e", hover_color="#545164", width=150)
         self.clear_history_button.grid(row=6, column=0, padx=10, pady=10, sticky="nsew")
-
         # Загружаем данные истории
         self.load_history_data()
+
+        return self.new_window
 
     def clear_history(self):
 
@@ -102,6 +105,12 @@ class Database:
                 self.a = r[1].value
                 self.b = r[2].value
                 self.n = r[3].value
+
+                # Проверка на наличие данных в ячейках
+                if self.fx is None or self.a is None or self.b is None or self.n is None:
+                    CTkMessagebox(title="Ошибка", message="В выбранной строке истории отсутствуют данные!",
+                                  width=300, height=200, icon="cancel")
+                    return  # Прерываем выполнение функции, если данные отсутствуют
 
                 # Заполняем поля в calculate_frame
                 self.parent.entry_func.delete(0, 'end')
@@ -138,3 +147,9 @@ class Database:
 
         self.wb.save(self.fn)
         self.wb.close()
+
+    def close_history_window(self):
+        self.new_window.destroy()
+        self.new_window = None
+        self.parent.new_window_deleter = None
+
