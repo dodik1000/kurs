@@ -18,12 +18,7 @@ class Equation:
         self.y = []
 
         try:
-            self.a = float(a)
-            self.b = float(b)
             self.n = int(n)
-            self.h = (self.b - self.a) / self.n
-            self.x = np.linspace(self.a, self.b, self.n + 1)
-
             try:
                 ast.parse(fx)  # Вызовет SyntaxError, если fx недействителен
             except SyntaxError:
@@ -36,7 +31,18 @@ class Equation:
             # Это необходимо для того, чтобы были доступны
             # математические функции (sin, cos, exp),
             # которые могут использоваться в функции, введенной пользователем.
-            exec("from math import *", self.local_namespace)
+            exec("from numpy import *", self.local_namespace)
+
+            self.a = eval(a, self.local_namespace)
+            self.b = eval(b, self.local_namespace)
+            self.h = (self.b - self.a) / self.n
+            self.x = np.linspace(self.a, self.b, self.n + 1)
+
+            if 'sqrt' in self.fx:  # Проверка на наличие sqrt (без учета регистра)
+                if self.a < 0 or self.b < 0:
+                    raise ValueError(
+                        "Пределы интегрирования должны быть неотрицательными, "
+                        "если функция содержит sqrt.")
 
             # Вычисляем значения функции для каждого x
             for x_val in self.x:
