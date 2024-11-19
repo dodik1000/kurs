@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import ast
 
-""" Класс для работы с уравнениями и их приближенным интегрированием методом Симпсона """
+""" Класс для работы с уравнениями и их
+ приближенным интегрированием методом Симпсона """
 
 
 class Equation:
@@ -32,8 +33,9 @@ class Equation:
             self.local_namespace = {}
 
             # Импорт функции из модуля math в это пространство имен.
-            # Это необходимо для того, чтобы были доступны математические функции (sin, cos, exp),
-            # которые могут использоваться в выражении функции, введенном пользователем.
+            # Это необходимо для того, чтобы были доступны
+            # математические функции (sin, cos, exp),
+            # которые могут использоваться в функции, введенной пользователем.
             exec("from math import *", self.local_namespace)
 
             # Вычисляем значения функции для каждого x
@@ -41,15 +43,18 @@ class Equation:
                 self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
                 self.y.append(self.y_value)
         except (NameError, ValueError, SyntaxError, TypeError) as e:
-            CTkMessagebox(title="Ошибка", message=f"Неверный формат введенных данных: {e}", width=400, height=200,
-                          icon="warning")
+            CTkMessagebox(title="Ошибка",
+                          message=f"Неверный формат введенных данных: {e}",
+                          width=400, height=200, icon="warning")
 
     def simpson(self):
         """ Вызов функции подсчета и построения графика, вывод результата """
         result = self.calculate_simpson()
         if result is not None:
-            self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}", font=('Arial Black', 18))
-            self.answer_done.grid(row=5, column=0, columnspan=3, padx=10, pady=(5, 20), sticky="ew")
+            self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}",
+                                            font=('Arial Black', 18))
+            self.answer_done.grid(row=5, column=0, columnspan=3,
+                                  padx=10, pady=(5, 20), sticky="ew")
             self.plot_function()
 
     def calculate_simpson(self):
@@ -72,7 +77,8 @@ class Equation:
             return integral
 
         except ValueError:
-            CTkMessagebox(title="Ошибка ввода", message="Неверный формат введенных данных",
+            CTkMessagebox(title="Ошибка ввода",
+                          message="Неверный формат введенных данных",
                           width=400, height=200, icon="cancel")
             return None
 
@@ -97,7 +103,8 @@ class Equation:
             # Создание CanvasTkAgg
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame)
             self.canvas.draw()
-            self.canvas.get_tk_widget().grid(row=6, column=0, columnspan=2, sticky='nsew', pady=(0, 10))
+            self.canvas.get_tk_widget().grid(row=6, column=0, columnspan=2,
+                                             sticky='nsew', pady=(0, 10))
 
             # Настройка размеров фрейма
             self.frame.grid_rowconfigure(6, weight=1)
@@ -106,5 +113,6 @@ class Equation:
             plt.close()
 
         except Exception as e:
-            CTkMessagebox(title="Ошибка", message=f"Ошибка при построении графика: {e}",
+            CTkMessagebox(title="Ошибка",
+                          message=f"Ошибка при построении графика: {e}",
                           width=300, height=200, icon="cancel")

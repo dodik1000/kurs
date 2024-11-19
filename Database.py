@@ -16,11 +16,11 @@ class Database:
         self.n = n
         self.new_win_counter = 0
 
-
     def load_history_data(self):
 
         # Чтение данных из Excel
-        for i, row in enumerate(self.ws.iter_rows(min_row=2, max_row=self.ws.max_row)):
+        for i, row in enumerate(self.ws.iter_rows(min_row=2,
+                                                  max_row=self.ws.max_row)):
             if i < len(self.history_frames):  # Проверка, есть ли достаточно фреймов
                 fx = row[0].value
                 a = row[1].value
@@ -29,7 +29,8 @@ class Database:
 
                 # Обновление текста лейбла
                 history_label, _ = self.history_frames[i]
-                history_label.configure(text=f"f(x) = {fx}\na = {a}\nb = {b}\nn = {n}\n")
+                history_label.configure(text=f"f(x) = {fx}\n"
+                                             f"a = {a}\nb = {b}\nn = {n}\n")
 
         self.wb.close()
 
@@ -45,7 +46,8 @@ class Database:
 
         # Создаем 5 фреймов
         for i in range(5):
-            self.history_frame = ctk.CTkFrame(self.new_window, corner_radius=10, height=100, width=290)
+            self.history_frame = ctk.CTkFrame(self.new_window, corner_radius=10,
+                                              height=100, width=290)
             self.history_frame.grid(row=i, column=0, padx=5, pady=5)
             self.history_frame.grid_propagate(False)
 
@@ -54,20 +56,28 @@ class Database:
             self.history_frame.grid_columnconfigure(1, weight=0)
             self.history_frame.grid_rowconfigure(0, weight=1)
 
-            self.history_label = ctk.CTkLabel(self.history_frame, text="", font=("Arial Black", 12), wraplength=220,
-                                              justify="left")
+            self.history_label = ctk.CTkLabel(self.history_frame, text="",
+                                              font=("Arial Black", 12),
+                                              wraplength=220, justify="left")
             self.history_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-            self.history_button = ctk.CTkButton(self.history_frame, text="Выбрать", font=("Arial Black", 12),
-                                                command=lambda idx=i: self.fill_input_fields(idx),
-                                                fg_color="#7d748e", hover_color="#545164", width=80)
+            self.history_button = ctk.CTkButton(self.history_frame, text="Выбрать",
+                                                font=("Arial Black", 12),
+                                                command=lambda idx=i:
+                                                self.fill_input_fields(idx),
+                                                fg_color="#7d748e",
+                                                hover_color="#545164", width=80)
             self.history_button.grid(row=0, column=1, padx=10, pady=10, sticky="e")
 
             self.history_frames.append((self.history_label, self.history_button))
 
-        self.clear_history_button = ctk.CTkButton(self.new_window, text="Очистить историю", command=self.clear_history,
-                                                  fg_color="#7d748e", hover_color="#545164", width=150)
-        self.clear_history_button.grid(row=6, column=0, padx=10, pady=10, sticky="nsew")
+        self.clear_history_button = ctk.CTkButton(self.new_window,
+                                                  text="Очистить историю",
+                                                  command=self.clear_history,
+                                                  fg_color="#7d748e",
+                                                  hover_color="#545164", width=150)
+        self.clear_history_button.grid(row=6, column=0,
+                                       padx=10, pady=10, sticky="nsew")
         # Загружаем данные истории
         self.load_history_data()
 
@@ -97,7 +107,8 @@ class Database:
         """Заполняет поля в calculate_frame данными из истории."""
         if button_index < len(self.history_frames):
 
-            row = list(self.ws.iter_rows(min_row=button_index + 2, max_row=button_index + 2))
+            row = list(self.ws.iter_rows(min_row=button_index + 2,
+                                         max_row=button_index + 2))
 
             if row:
                 r = row[0]
@@ -107,8 +118,11 @@ class Database:
                 self.n = r[3].value
 
                 # Проверка на наличие данных в ячейках
-                if self.fx is None or self.a is None or self.b is None or self.n is None:
-                    CTkMessagebox(title="Ошибка", message="В выбранной строке истории отсутствуют данные!",
+                if (self.fx is None or self.a is None
+                        or self.b is None or self.n is None):
+                    CTkMessagebox(title="Ошибка",
+                                  message="В выбранной строке истории "
+                                          "отсутствуют данные!",
                                   width=300, height=200, icon="cancel")
                     return  # Прерываем выполнение функции, если данные отсутствуют
 
@@ -126,7 +140,8 @@ class Database:
 
     def update_history(self):
         # Добавляем счетчик строки
-        row_counter_cell = self.ws['F2']  # Используем ячейку F2 для хранения текущего значения строки
+        # Ячейка F2 для хранения текущего значения строки
+        row_counter_cell = self.ws['F2']
         self.row_counter = row_counter_cell.value if row_counter_cell.value else 2
 
         # Устанавливаем значения в новую строку
