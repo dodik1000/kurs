@@ -85,13 +85,13 @@ class App(ctk.CTk):
         self.about_author_button.grid(row=2, column=0, padx=20, pady=(10, 0))
 
         # Кнопка "О программе"
-        self.about_programm_button = (ctk.CTkButton
-                                      (self.sidebar_frame, text="О программе",
-                                       fg_color="#7d748e", hover_color="#545164",
-                                       command=lambda:
-                                       self.switch_frame(self.about_program_frame),
-                                       width=147, height=30))
-        self.about_programm_button.grid(row=3, column=0, padx=20, pady=(10, 0))
+        self.about_program_button = (ctk.CTkButton
+                                     (self.sidebar_frame, text="О программе",
+                                      fg_color="#7d748e", hover_color="#545164",
+                                      command=lambda:
+                                      self.switch_frame(self.about_program_frame),
+                                      width=147, height=30))
+        self.about_program_button.grid(row=3, column=0, padx=20, pady=(10, 0))
 
         # Кнопка "История вычислений"
         self.recent_button = ctk.CTkButton(self.sidebar_frame,
@@ -111,11 +111,11 @@ class App(ctk.CTk):
                                                   text="Тема:", anchor="w")
         self.appearance_mode_label.grid(row=6, column=0, padx=20, pady=(10, 0))
 
-        self.appearance_mode_optionemenu = (
+        self.appearance_mode_option_menu = (
             ctk.CTkOptionMenu(self.sidebar_frame, values=["Светлая", "Темная"],
                               command=self.change_theme, fg_color="#7d748e",
                               button_color="#7d748e", button_hover_color="#545164"))
-        self.appearance_mode_optionemenu.grid(row=7, column=0, padx=20, pady=(10, 30))
+        self.appearance_mode_option_menu.grid(row=7, column=0, padx=20, pady=(10, 30))
         # endregion
 
         '''------------------- MAIN FRAME -------------------'''
@@ -125,7 +125,7 @@ class App(ctk.CTk):
 
         # Установка темной темы по умолчанию
         ctk.set_appearance_mode("Dark")
-        self.appearance_mode_optionemenu.set("Темная")
+        self.appearance_mode_option_menu.set("Темная")
 
         # region: Оформление главного окна
 
@@ -141,9 +141,9 @@ class App(ctk.CTk):
         self.label_uni.grid(pady=(10, 60))
 
         # Название проекта
-        self.label_kurs = ctk.CTkLabel(self.main_frame, text="Курсовой проект",
-                                       font=("Arial Black", 24))
-        self.label_kurs.grid()
+        self.label_course = ctk.CTkLabel(self.main_frame, text="Курсовой проект",
+                                         font=("Arial Black", 24))
+        self.label_course.grid()
         self.label_subject = ctk.CTkLabel(self.main_frame,
                                           text="по дисциплине Языки программирования",
                                           font=("Arial Black", 16))
@@ -157,7 +157,7 @@ class App(ctk.CTk):
         self.label_theme.grid(pady=(0, 30))
 
         # Загрузка изображения
-        self.image = Image.open("materials/integralcalculator.png")
+        self.image = Image.open("materials/integral_calculator.png")
         self.ctk_image = ctk.CTkImage(light_image=self.image, size=(150, 150))
 
         self.group_frame.grid()
@@ -265,18 +265,30 @@ class App(ctk.CTk):
         #################################################################
         # region: ABOUT AUTHOR FRAME
 
+        self.ab_author_label = ctk.CTkLabel(self.about_author_frame,
+                                            text="Автор",
+                                            font=("Arial Black", 20))
+        self.ab_author_label.grid(row=0, column=1, padx=200,
+                                  pady=(15, 15), sticky="nsew")
+
+        self.image_author = Image.open("materials/author.jpg")
+        self.ctk_image3 = ctk.CTkImage(light_image=self.image_author, size=(300, 300))
+        self.label_image3 = ctk.CTkLabel(self.about_author_frame,
+                                         image=self.ctk_image3, text="")
+        self.label_image3.grid(row=1, column=1, padx=10, sticky="nsew")
+
         self.auth_label1 = ctk.CTkLabel(self.about_author_frame,
-                                        text="Автор\n\nСтудент группы 10701123"
+                                        text="Студент группы 10701123"
                                         "\n\nМакаров Артём Сергеевич"
                                         "\n\nartemmakarovv05@gmail.com",
-                                        font=("Arial Black", 20))
-        self.auth_label1.grid(row=0, column=1, padx=200, pady=(70, 15), sticky="nsew")
+                                        font=("Arial Black", 18))
+        self.auth_label1.grid(row=2, column=1, padx=200, pady=(30, 15), sticky="nsew")
 
         self.image2 = Image.open("materials/bntu.png")
-        self.ctk_image2 = ctk.CTkImage(light_image=self.image2, size=(200, 200))
+        self.ctk_image2 = ctk.CTkImage(light_image=self.image2, size=(180, 180))
         self.label_image2 = ctk.CTkLabel(self.about_author_frame,
                                          image=self.ctk_image2, text="")
-        self.label_image2.grid(row=1, column=1, padx=10,  sticky="nsew")
+        self.label_image2.grid(row=3, column=1, padx=10,  sticky="nsew")
 
         # endregion
 
@@ -329,7 +341,8 @@ class App(ctk.CTk):
                               "на основе введенных данных.\n"
                               "• Отображение результата: "
                               "Результат вычисления отображается на экране.",
-                         font=("Arial Black", 12), wraplength=700, justify="left"))
+                         font=("Arial Black", 12), padx=10,
+                         wraplength=700, justify="left"))
         self.features_text.grid()
 
         # Преимущества метода Симпсона
@@ -350,6 +363,7 @@ class App(ctk.CTk):
         # endregion
 
     def change_theme(self, theme):
+        """ Мето"""
         if theme == "Темная":
             ctk.set_appearance_mode("Dark")
             self.main_frame.configure(fg_color="#202020")
@@ -387,7 +401,7 @@ class App(ctk.CTk):
             self.after_cancel(self.update_countdown_id)
         self.destroy()
 
-    def execute_functions(self):  # Функция-обертка
+    def execute_functions(self):
         self.eq = Equation(self.calculate_frame, self, self.entry_func.get(),
                            self.entry_a.get(), self.entry_b.get(), self.entry_n.get())
         self.eq.simpson()
