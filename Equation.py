@@ -10,13 +10,14 @@ import ast
 
 
 class Equation:
-    def __init__(self, frame, parent, fx, a, b, n, theme):
+    def __init__(self, frame, parent, fx, a, b, n, theme, acc):
         """ Инициализация уравнения """
         self.parent = parent
         self.frame = frame
         self.fx = fx
         self.y = []
         self.theme = theme
+        self.acc = acc
 
         if self.theme == "Dark":
             plt.rcParams.update({
@@ -74,13 +75,12 @@ class Equation:
                         "если функция содержит log.")
 
             # Вычисляем значения функции для каждого x
-            for x_val in self.x:
-                self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
-                self.y.append(self.y_value)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                for x_val in self.x:
+                    self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
+                    self.y.append(self.y_value)
         except (NameError, ValueError, SyntaxError, TypeError) as e:
-            CTkMessagebox(title="Ошибка",
-                          message=f"Неверный формат введенных данных: {e}",
-                          width=400, height=200, icon="warning")
+            return
 
     def simpson(self):
         """ Вызов функции подсчета и построения графика, вывод результата """
@@ -110,12 +110,14 @@ class Equation:
             # Лейбл для функции и результата
             self.answer_done = ctk.CTkLabel(self.integral_frame,
                                             text=f"{self.fx} dx, "
-                                                 f"Ответ: {result:.5f}\n",
+                                                 f"Ответ: {result:.{self.acc}f}\n",
                                             font=('Arial Black', 18))
             self.answer_done.grid(row=1, column=1, rowspan=2, sticky="w")
 
             self.plot_function()
-            return f"{result:.5f}", self.integral_frame
+            return f"{result:.{self.acc}f}", self.integral_frame
+        else:
+            return None, None
 
     def calculate_simpson(self):
         """ Расчет интеграла методом Симпсона """

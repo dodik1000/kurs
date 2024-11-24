@@ -30,6 +30,8 @@ class App(ctk.CTk):
         # Инициализация переменной для удаления окна
         self.new_window_deleter = None
         self.int_frame_deleter = None
+        self.calculations_result = None
+        self.precision = 4
 
         self.calculations_result = None
 
@@ -75,7 +77,7 @@ class App(ctk.CTk):
                                             image=self.ctk_image_save,
                                             text="Сохранить", fg_color="#7d748e",
                                             hover_color="#545164", width=30,
-                                            height=15, font=("Arial", 12),
+                                            height=15, font=("Arial black", 12),
                                             command=self.save_file)
         self.save_me_button.grid(row=0, column=0, padx=(20, 5))
 
@@ -86,14 +88,14 @@ class App(ctk.CTk):
                                             image=self.ctk_image_save,
                                             text="Открыть", fg_color="#7d748e",
                                             hover_color="#545164", width=30,
-                                            height=15, font=("Arial", 12),
+                                            height=15, font=("Arial black", 12),
                                             command=self.open_file)
         self.open_me_button.grid(row=0, column=1, padx=5)
 
         # Перегородка между кнопками
-        self.separator = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
+        self.separator1 = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
                                       height=20, fg_color="#7d748e")
-        self.separator.grid(row=0, column=2, padx=5)
+        self.separator1.grid(row=0, column=2, padx=5)
 
         self.image_clear = Image.open("materials/clearicon.png")
         self.ctk_image_clear = ctk.CTkImage(light_image=self.image_clear,
@@ -103,26 +105,40 @@ class App(ctk.CTk):
                                              image=self.ctk_image_clear,
                                              text="Очистить поля", fg_color="#7d748e",
                                              hover_color="#545164", width=30,
-                                             height=15, font=("Arial", 12),
+                                             height=15, font=("Arial black", 12),
                                              command=self.clear_me)
         self.clear_me_button.grid(row=0, column=3, padx=5)
 
-        self.separator = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
+        self.separator2 = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
                                       height=20, fg_color="#7d748e")
-        self.separator.grid(row=0, column=4, padx=5)
+        self.separator2.grid(row=0, column=4, padx=5)
+
+        self.slider_name = ctk.CTkLabel(self.menu_bar_frame, width=2,
+                                        text="Количество знаков после запятой:",
+                                        height=20, font=("Arial Black", 12))
+        self.slider_name.grid(row=0, column=5, padx=5)
+
+        self.slider_1 = ctk.CTkSlider(self.menu_bar_frame, from_=1, to=9, width=90,
+                                      number_of_steps=8, button_color="#7d748e",
+                                      command=self.update_precision,
+                                      button_hover_color="#7d748e")
+        self.slider_1.grid(row=0, column=6, padx=5)
+
+        self.separator3 = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
+                                       height=20, fg_color="#7d748e")
+        self.separator3.grid(row=0, column=7, padx=(10,10))
 
         self.image_help = Image.open("materials/helpicon.png")
-        self.ctk_image_help = ctk.CTkImage(light_image=self.image_help,
-                                           size=(18, 18))
+        self.ctk_image_help = ctk.CTkImage(light_image=self.image_help, size=(18, 18))
 
         self.help_me_button = ctk.CTkButton(self.menu_bar_frame,
                                             image=self.ctk_image_help,
                                             text="Помощь", fg_color="#7d748e",
                                             hover_color="#545164", width=30,
-                                            height=15, font=("Arial", 12),
+                                            height=15, font=("Arial Black", 12),
                                             command=lambda: self.switch_frame
                                             (self.show_help_frame))
-        self.help_me_button.grid(row=0, column=5, padx=5)
+        self.help_me_button.grid(row=0, column=8)
 
         # endregion
 
@@ -520,7 +536,7 @@ class App(ctk.CTk):
 
         self.eq = Equation(self.calculate_frame, self, self.entry_func.get(),
                            self.entry_a.get(), self.entry_b.get(), self.entry_n.get(),
-                           ctk.get_appearance_mode())
+                           ctk.get_appearance_mode(), self.precision)
         self.calculations_result, self.int_frame_deleter = self.eq.simpson()
 
         self.db = Database(self, self.entry_func.get(), self.entry_a.get(),
@@ -592,6 +608,9 @@ class App(ctk.CTk):
             if hasattr(self, 'update_countdown_id'):
                 self.after_cancel(self.update_countdown_id)
             self.close_program()
+
+    def update_precision(self, value):
+        self.precision = int(float(value))
 
     def clear_me(self):
         self.after_cancel(self.idle_timer_id)
