@@ -2,6 +2,8 @@ import customtkinter as ctk
 from PIL import Image
 from Equation import Equation
 from Database import Database
+from tkinter import filedialog
+from CTkMessagebox import CTkMessagebox
 
 
 class App(ctk.CTk):
@@ -15,17 +17,21 @@ class App(ctk.CTk):
         self.resizable(width=False, height=False)
 
         # region: Конфигурация окна
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure((2, 3), weight=0)
-        self.grid_rowconfigure((0, 1, 2), weight=1)
+        self.grid_columnconfigure(1, weight=1)  # Main content area expands
+        self.grid_columnconfigure(0, weight=0)  # Sidebar doesn't expand
+        self.grid_rowconfigure(0, weight=0)  # Menubar doesn't expand vertically
+        self.grid_rowconfigure((1, 2, 3), weight=1)  # Remaining rows expand
 
         # endregion
 
         # Инициализация таймера бездействия
-        self.idle_timer = None
+        self.idle_timer_id = self.after(60000, self.show_idle_warning)
 
         # Инициализация переменной для удаления окна
         self.new_window_deleter = None
+        self.int_frame_deleter = None
+
+        self.calculations_result = None
 
         # Установка обработчика события закрытия окна
         self.protocol("WM_DELETE_WINDOW", self.close_program)
@@ -46,15 +52,84 @@ class App(ctk.CTk):
         self.about_program_group = ctk.CTkFrame(self.about_program_frame,
                                                 corner_radius=0,
                                                 fg_color="#202020")
+        self.menu_bar_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#282828",
+                                           height=40, width=900)
+        self.show_help_frame = ctk.CTkFrame(self, corner_radius=0,
+                                            fg_color="#202020")
         # endregion
 
         # Текущий фрейм
         self.current_frame = self.main_frame
 
+        '''------------------- MENU BAR FRAME -------------------'''
+
+        self.menu_bar_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.menu_bar_frame.grid_propagate(False)
+        self.menu_bar_frame.rowconfigure(0, weight=1)
+
+        # region: Оформление меню
+        self.image_save = Image.open("materials/saveicon.png")
+        self.ctk_image_save = ctk.CTkImage(light_image=self.image_save, size=(18, 18))
+
+        self.save_me_button = ctk.CTkButton(self.menu_bar_frame,
+                                            image=self.ctk_image_save,
+                                            text="Сохранить", fg_color="#7d748e",
+                                            hover_color="#545164", width=30,
+                                            height=15, font=("Arial", 12),
+                                            command=self.save_file)
+        self.save_me_button.grid(row=0, column=0, padx=(20, 5))
+
+        self.image_open = Image.open("materials/openicon.png")
+        self.ctk_image_save = ctk.CTkImage(light_image=self.image_open, size=(18, 18))
+
+        self.open_me_button = ctk.CTkButton(self.menu_bar_frame,
+                                            image=self.ctk_image_save,
+                                            text="Открыть", fg_color="#7d748e",
+                                            hover_color="#545164", width=30,
+                                            height=15, font=("Arial", 12),
+                                            command=self.open_file)
+        self.open_me_button.grid(row=0, column=1, padx=5)
+
+        # Перегородка между кнопками
+        self.separator = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
+                                      height=20, fg_color="#7d748e")
+        self.separator.grid(row=0, column=2, padx=5)
+
+        self.image_clear = Image.open("materials/clearicon.png")
+        self.ctk_image_clear = ctk.CTkImage(light_image=self.image_clear,
+                                            size=(18, 18))
+
+        self.clear_me_button = ctk.CTkButton(self.menu_bar_frame,
+                                             image=self.ctk_image_clear,
+                                             text="Очистить поля", fg_color="#7d748e",
+                                             hover_color="#545164", width=30,
+                                             height=15, font=("Arial", 12),
+                                             command=self.clear_me)
+        self.clear_me_button.grid(row=0, column=3, padx=5)
+
+        self.separator = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
+                                      height=20, fg_color="#7d748e")
+        self.separator.grid(row=0, column=4, padx=5)
+
+        self.image_help = Image.open("materials/helpicon.png")
+        self.ctk_image_help = ctk.CTkImage(light_image=self.image_help,
+                                           size=(18, 18))
+
+        self.help_me_button = ctk.CTkButton(self.menu_bar_frame,
+                                            image=self.ctk_image_help,
+                                            text="Помощь", fg_color="#7d748e",
+                                            hover_color="#545164", width=30,
+                                            height=15, font=("Arial", 12),
+                                            command=lambda: self.switch_frame
+                                            (self.show_help_frame))
+        self.help_me_button.grid(row=0, column=5, padx=5)
+
+        # endregion
+
         '''------------------- SIDEBAR FRAME -------------------'''
 
         # Размещение фрейма
-        self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
+        self.sidebar_frame.grid(row=1, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
 
         # region : Размещение кнопок и меток боковой панели
@@ -97,7 +172,7 @@ class App(ctk.CTk):
         self.recent_button = ctk.CTkButton(self.sidebar_frame,
                                            text="История вычислений",
                                            fg_color="#7d748e", hover_color="#545164",
-                                           command=self.execute_funcs_history,
+                                           command=self.show_calculation_history,
                                            state="enabled",
                                            width=147, height=30)
         self.recent_button.grid(row=4, column=0, padx=20, pady=(10, 0), sticky="n")
@@ -121,7 +196,7 @@ class App(ctk.CTk):
         '''------------------- MAIN FRAME -------------------'''
 
         # Размещение главного фрейма
-        self.main_frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
+        self.main_frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
 
         # Установка темной темы по умолчанию
         ctk.set_appearance_mode("Dark")
@@ -188,7 +263,7 @@ class App(ctk.CTk):
 
         self.label_year = ctk.CTkLabel(self.main_frame, text="Минск, 2024",
                                        font=("Arial Black", 16))
-        self.label_year.grid(pady=(120, 0))
+        self.label_year.grid(pady=(90, 0))
 
         self.button_frame.grid(sticky="s", pady=(20, 30))
 
@@ -215,11 +290,11 @@ class App(ctk.CTk):
             ctk.CTkLabel(self.calculate_frame,
                          text="Функция (используйте 'x' как переменную):",
                          font=('Arial Black', 14)))
-        self.func_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
+        self.func_label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
 
         self.entry_func = ctk.CTkEntry(self.calculate_frame, width=300,
                                        font=('Arial Black', 14))
-        self.entry_func.grid(row=0, column=1, columnspan=2, padx=10, pady=20,
+        self.entry_func.grid(row=0, column=1, columnspan=2, padx=10, pady=10,
                              sticky="nsew")
 
         # Нижний предел (a):
@@ -257,8 +332,8 @@ class App(ctk.CTk):
         self.but = ctk.CTkButton(self.calculate_frame, text="Вычислить",
                                  font=('Arial Black', 14),
                                  fg_color="#7d748e", hover_color="#545164",
-                                 command=self.execute_functions)
-        self.but.grid(row=4, column=0, columnspan=3, padx=10, pady=20, sticky="ew")
+                                 command=self.calculate_answer)
+        self.but.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
 
         # endregion
 
@@ -272,7 +347,7 @@ class App(ctk.CTk):
                                   pady=(15, 15), sticky="nsew")
 
         self.image_author = Image.open("materials/author.jpg")
-        self.ctk_image3 = ctk.CTkImage(light_image=self.image_author, size=(300, 300))
+        self.ctk_image3 = ctk.CTkImage(light_image=self.image_author, size=(280, 280))
         self.label_image3 = ctk.CTkLabel(self.about_author_frame,
                                          image=self.ctk_image3, text="")
         self.label_image3.grid(row=1, column=1, padx=10, sticky="nsew")
@@ -282,7 +357,7 @@ class App(ctk.CTk):
                                         "\n\nМакаров Артём Сергеевич"
                                         "\n\nartemmakarovv05@gmail.com",
                                         font=("Arial Black", 18))
-        self.auth_label1.grid(row=2, column=1, padx=200, pady=(30, 15), sticky="nsew")
+        self.auth_label1.grid(row=2, column=1, padx=200, pady=(30, 5), sticky="nsew")
 
         self.image2 = Image.open("materials/bntu.png")
         self.ctk_image2 = ctk.CTkImage(light_image=self.image2, size=(180, 180))
@@ -362,8 +437,41 @@ class App(ctk.CTk):
 
         # endregion
 
+        #################################################################
+        # region: SHOW HELP FRAME
+
+        self.auth_label1 = ctk.CTkLabel(self.show_help_frame,
+                                        text="Помощь\n",
+                                        font=("Arial Black", 18))
+        self.auth_label1.grid(row=0, column=0, pady=(30, 5))
+        self.features_text = (
+            ctk.CTkLabel(self.show_help_frame,
+                         text="Ввод функций:\n\n1. Степень: \nЧтобы возвести число в "
+                              "степень, используйте двойную звездочку (**).\n"
+                              "Например, для возведения x в квадрат напишите `x**2`."
+                              "\n\n2. Корень: \nДля вычисления квадратного корня "
+                              "используйте функцию `sqrt()`. Например, квадратный "
+                              "корень из x: `sqrt(x)`.\n\n3. Математические "
+                              "функции: \nВы можете использовать различные "
+                              "математические функции, такие как `sin()`, `cos()`, "
+                              "`tan()`, `log()`, и т.д.\nНапример, синус x: `sin(x)`."
+                              "\n\nВвод пределов интегрирования:\n\n1. "
+                              "Нижний предел: \nВведите значение нижнего "
+                              "предела интегрирования в соответствующее поле.\n\n"
+                              "2. Верхний предел: \nВведите значение верхнего "
+                              "предела интегрирования в соответствующее поле. "
+                              "\n\nПримеры ввода функций: "
+                              "\n- Полиномиальная функция: `x**3 + 2*x**2 - 5*x + 1` "
+                              "\n- Тригонометрическая функция: `sin(x) + cos(x)`"
+                              "\n- Логарифмическая функция: `log(x)`",
+                         font=("Arial Black", 14), padx=10,
+                         wraplength=700, justify="left"))
+        self.features_text.grid()
+
+        # endregion
+
     def change_theme(self, theme):
-        """ Мето"""
+        """ Метод для смены темы приложения"""
         if theme == "Темная":
             ctk.set_appearance_mode("Dark")
             self.main_frame.configure(fg_color="#202020")
@@ -374,6 +482,8 @@ class App(ctk.CTk):
             self.about_author_frame.configure(fg_color="#202020")
             self.about_program_frame.configure(fg_color="#202020")
             self.about_program_group.configure(fg_color="#202020")
+            self.menu_bar_frame.configure(fg_color="#282828")
+            self.show_help_frame.configure(fg_color="#202020")
         elif theme == "Светлая":
             ctk.set_appearance_mode("Light")
             self.main_frame.configure(fg_color="#f3f3f3")
@@ -384,10 +494,13 @@ class App(ctk.CTk):
             self.about_author_frame.configure(fg_color="#f3f3f3")
             self.about_program_frame.configure(fg_color="#f3f3f3")
             self.about_program_group.configure(fg_color="#f3f3f3")
+            self.menu_bar_frame.configure(fg_color="#E8E8E8")
+            self.show_help_frame.configure(fg_color="#f3f3f3")
 
     def switch_frame(self, new_frame):
+        self.after_cancel(self.idle_timer_id)
         self.current_frame.grid_forget()
-        new_frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
+        new_frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
         self.current_frame = new_frame
 
     def close_program(self):
@@ -401,18 +514,21 @@ class App(ctk.CTk):
             self.after_cancel(self.update_countdown_id)
         self.destroy()
 
-    def execute_functions(self):
+    def calculate_answer(self):
+        if self.int_frame_deleter is not None:
+            self.int_frame_deleter.grid_forget()
+
         self.eq = Equation(self.calculate_frame, self, self.entry_func.get(),
-                           self.entry_a.get(), self.entry_b.get(), self.entry_n.get())
-        self.eq.simpson()
+                           self.entry_a.get(), self.entry_b.get(), self.entry_n.get(),
+                           ctk.get_appearance_mode())
+        self.calculations_result, self.int_frame_deleter = self.eq.simpson()
 
         self.db = Database(self, self.entry_func.get(), self.entry_a.get(),
                            self.entry_b.get(), self.entry_n.get())
-        self.reset_idle_timer()
         self.db.update_history()
         self.db = None
 
-    def execute_funcs_history(self):
+    def show_calculation_history(self):
         self.recent_button.configure(state="disabled")
         # Включаем кнопку обратно через 2 секунды
         self.after(350, lambda: self.recent_button.configure(state="enabled"))
@@ -425,19 +541,13 @@ class App(ctk.CTk):
         self.new_window_deleter = self.db.history_window()
         self.db = None
 
-    def reset_idle_timer(self):
-        """Сбрасывает таймер бездействия."""
-        if hasattr(self, 'idle_timer_id'):
-            self.after_cancel(self.idle_timer_id)
-        self.idle_timer_id = self.after(60000, self.show_idle_warning)
-
     def continue_session(self):
         self.warning_window.destroy()
-        self.reset_idle_timer()
         if hasattr(self, 'close_timer_id'):
             self.after_cancel(self.close_timer_id)
         if hasattr(self, 'update_countdown_id'):
             self.after_cancel(self.update_countdown_id)
+        self.idle_timer_id = self.after(60000, self.show_idle_warning)
 
     def show_idle_warning(self):
         """Показывает окно с предупреждением о бездействии."""
@@ -482,6 +592,86 @@ class App(ctk.CTk):
             if hasattr(self, 'update_countdown_id'):
                 self.after_cancel(self.update_countdown_id)
             self.close_program()
+
+    def clear_me(self):
+        self.after_cancel(self.idle_timer_id)
+        self.entry_func.delete(0, 'end')
+        self.entry_func.insert(0, "")
+        self.entry_a.delete(0, 'end')
+        self.entry_a.insert(0, "")
+        self.entry_b.delete(0, 'end')
+        self.entry_b.insert(0, "")
+        self.entry_n.delete(0, 'end')
+        self.entry_n.insert(0, "")
+
+    def save_file(self):
+        # Открываем диалоговое окно сохранения файла
+        file_path = filedialog.asksaveasfilename(defaultextension=".txt",
+                                                 filetypes=[("Text files", "*.txt")])
+        if file_path:
+            # Словарь для хранения значений полей и их названий
+            fields = {
+                'Функция': self.entry_func.get(),
+                'Нижний предел': self.entry_a.get(),
+                'Верхний предел': self.entry_b.get(),
+                'Количество точек': self.entry_n.get(),
+                'Результат': self.calculations_result
+            }
+
+            # Проверка, что все поля заполнены
+            for name, value in fields.items():
+                if not value:
+                    CTkMessagebox(title="Ошибка",
+                                  message=f"Поле '{name}' не должно быть пустым",
+                                  width=300, height=200, icon="cancel")
+                    return
+
+            # Записываем данные в файл
+            with open(file_path, 'w', encoding='utf-8') as file:
+                for name, value in fields.items():
+                    file.write(f'{name}: {value}\n')
+                CTkMessagebox(title="Сохранено",
+                              message="Файл успешно сохранен",
+                              width=300, height=200, icon="check")
+
+    def open_file(self):
+        # Открываем диалоговое окно открытия файла
+        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        if file_path:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+
+                # Очищаем текущие значения полей ввода
+                self.entry_func.delete(0, ctk.END)
+                self.entry_a.delete(0, ctk.END)
+                self.entry_b.delete(0, ctk.END)
+                self.entry_n.delete(0, ctk.END)
+
+                # Записываем значения в соответствующие поля
+                for line in lines:
+                    if line.startswith('Функция:'):
+                        self.entry_func.insert(0, line.split(':',
+                                                             1)[1].strip())
+                    elif line.startswith('Нижний предел:'):
+                        self.entry_a.insert(0, line.split(':',
+                                                          1)[1].strip())
+                    elif line.startswith('Верхний предел:'):
+                        self.entry_b.insert(0, line.split(':',
+                                                          1)[1].strip())
+                    elif line.startswith('Количество точек:'):
+                        self.entry_n.insert(0, line.split(':',
+                                                          1)[1].strip())
+
+                # Проверка значений полей и вывод сообщения об успешной загрузке
+                if (self.entry_func.get() and self.entry_a.get() and
+                        self.entry_b.get() and self.entry_n.get()):
+                    CTkMessagebox(title="Открыто",
+                                  message="Файл успешно импортирован",
+                                  width=300, height=200, icon="check")
+                else:
+                    CTkMessagebox(title="Ошибка",
+                                  message="Некоторые поля были заполнены некорректно",
+                                  width=300, height=200, icon="cancel")
 
 
 if __name__ == "__main__":

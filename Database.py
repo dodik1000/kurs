@@ -5,10 +5,11 @@ from CTkMessagebox import CTkMessagebox
 
 class Database:
     def __init__(self, parent, fx, a, b, n):
+        """Инициализация базы данных"""
         self.fn = 'materials/database.xlsx'
         self.wb = load_workbook(self.fn)
         self.ws = self.wb['Sheet1']
-        self.new_window = None  # Окно истории
+        self.new_window = None
         self.parent = parent
         self.fx = fx
         self.a = a
@@ -17,11 +18,9 @@ class Database:
         self.new_win_counter = 0
 
     def load_history_data(self):
-
-        # Чтение данных из Excel
-        for i, row in enumerate(self.ws.iter_rows(min_row=2,
-                                                  max_row=self.ws.max_row)):
-            if i < len(self.history_frames):  # Проверка, есть ли достаточно фреймов
+        """Чтение данных из Excel файла"""
+        for i, row in enumerate(self.ws.iter_rows(min_row=2, max_row=11)):
+            if i < len(self.history_frames):
                 fx = row[0].value
                 a = row[1].value
                 b = row[2].value
@@ -44,10 +43,17 @@ class Database:
 
         self.history_frames = []
 
-        # Создаем 5 фреймов
-        for i in range(5):
-            self.history_frame = ctk.CTkFrame(self.new_window, corner_radius=10,
-                                              height=100, width=290)
+        # Создаем фрейм с прокруткой
+        fg_color = "#202020" if ctk.get_appearance_mode() == "Dark" else "#f3f3f3"
+
+        self.scrollable_frame = ctk.CTkScrollableFrame(self.new_window, width=280,
+                                                       fg_color=fg_color, height=540)
+        self.scrollable_frame.grid(row=0, column=0)
+
+        # Создаем 10 фреймов
+        for i in range(10):
+            self.history_frame = ctk.CTkFrame(self.scrollable_frame, corner_radius=10,
+                                              height=100, width=270)
             self.history_frame.grid(row=i, column=0, padx=5, pady=5)
             self.history_frame.grid_propagate(False)
 
@@ -76,16 +82,16 @@ class Database:
                                                   command=self.clear_history,
                                                   fg_color="#7d748e",
                                                   hover_color="#545164", width=150)
-        self.clear_history_button.grid(row=6, column=0,
+        self.clear_history_button.grid(row=1, column=0,
                                        padx=10, pady=10, sticky="nsew")
+
         # Загружаем данные истории
         self.load_history_data()
 
         return self.new_window
 
     def clear_history(self):
-
-        # Очищаем ячейки с данными истории
+        """Очищает ячейки с данными истории"""
         for row in range(2, self.ws.max_row + 1):
             for col in range(1, 5):  # Очищаем столбцы A-D
                 self.ws.cell(row=row, column=col).value = None
@@ -97,19 +103,17 @@ class Database:
         self.wb.close()
 
         # Обновляем отображение истории в окне
-        self.load_history_data()  # Обновляем данные в фреймах
+        self.load_history_data()
 
         # Сбрасываем текст лейбла в окне истории
         for history_label, _ in self.history_frames:
             history_label.configure(text="")
 
     def fill_input_fields(self, button_index):
-        """Заполняет поля в calculate_frame данными из истории."""
+        """Заполняет поля в calculate_frame данными из истории"""
         if button_index < len(self.history_frames):
-
             row = list(self.ws.iter_rows(min_row=button_index + 2,
                                          max_row=button_index + 2))
-
             if row:
                 r = row[0]
                 self.fx = r[0].value
@@ -118,13 +122,12 @@ class Database:
                 self.n = r[3].value
 
                 # Проверка на наличие данных в ячейках
-                if (self.fx is None or self.a is None
-                        or self.b is None or self.n is None):
-                    CTkMessagebox(title="Ошибка",
-                                  message="В выбранной строке истории "
-                                          "отсутствуют данные!",
-                                  width=300, height=200, icon="cancel")
-                    return  # Прерываем выполнение функции, если данные отсутствуют
+                if (self.fx is None or self.a is None or
+                        self.b is None or self.n is None):
+                    CTkMessagebox(title="Ошибка", width=300,
+                                  message="В выбранной строке отсутствуют данные!",
+                                  height=200, icon="cancel")
+                    return
 
                 # Заполняем поля в calculate_frame
                 self.parent.entry_func.delete(0, 'end')
@@ -139,8 +142,7 @@ class Database:
             self.wb.close()
 
     def update_history(self):
-        # Добавляем счетчик строки
-        # Ячейка F2 для хранения текущего значения строки
+        """Обновляет историю в базе данных"""
         row_counter_cell = self.ws['F2']
         self.row_counter = row_counter_cell.value if row_counter_cell.value else 2
 
@@ -153,17 +155,17 @@ class Database:
         # Увеличиваем счетчик
         self.row_counter += 1
 
-        # Проверяем, не превышает ли счетчик 5
-        if self.row_counter > 6:
+        # Проверяем, не превышает ли счетчик 11
+        if self.row_counter > 11:
             self.row_counter = 2
 
-        # Сохраняем текущее значение row_counter в ячейке
         self.ws['F2'] = self.row_counter
 
         self.wb.save(self.fn)
         self.wb.close()
 
     def close_history_window(self):
+        """Закрытие окна истории"""
         self.new_window.destroy()
         self.new_window = None
         self.parent.new_window_deleter = None

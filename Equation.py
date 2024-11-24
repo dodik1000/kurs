@@ -10,12 +10,36 @@ import ast
 
 
 class Equation:
-    def __init__(self, frame, parent, fx, a, b, n):
+    def __init__(self, frame, parent, fx, a, b, n, theme):
         """ Инициализация уравнения """
         self.parent = parent
         self.frame = frame
         self.fx = fx
         self.y = []
+        self.theme = theme
+
+        if self.theme == "Dark":
+            plt.rcParams.update({
+                'axes.facecolor': '#282828',  # Цвет фона графика
+                'axes.edgecolor': '#ffffff',  # Цвет рамки графика
+                'axes.labelcolor': '#ffffff',  # Цвет меток осей
+                'xtick.color': '#ffffff',  # Цвет меток по оси X
+                'ytick.color': '#ffffff',  # Цвет меток по оси Y
+                'figure.facecolor': '#202020',  # Цвет фона фигуры
+                'grid.color': '#666666',  # Цвет сетки
+                'text.color': '#ffffff'  # Цвет текста
+            })
+        elif theme == "Light":
+            plt.rcParams.update({
+                'axes.facecolor': '#f3f3f3',  # Цвет фона графика
+                'axes.edgecolor': '#000000',  # Цвет рамки графика
+                'axes.labelcolor': '#000000',  # Цвет меток осей
+                'xtick.color': '#000000',  # Цвет меток по оси X
+                'ytick.color': '#000000',  # Цвет меток по оси Y
+                'figure.facecolor': '#f3f3f3',  # Цвет фона фигуры
+                'grid.color': '#000000',  # Цвет сетки
+                'text.color': '#000000'  # Цвет текста
+            })
 
         try:
             self.n = int(n)
@@ -24,10 +48,10 @@ class Equation:
             except SyntaxError:
                 raise ValueError("Синтаксическая ошибка.")
 
-            # Создаем новое пространство имен
+            # Пространство имен
             self.local_namespace = {}
 
-            # Импорт функции из модуля math в это пространство имен.
+            # Импорт функции из модуля numpy в это пространство имен.
             # Это необходимо для того, чтобы были доступны
             # математические функции (sin, cos, exp),
             # которые могут использоваться в функции, введенной пользователем.
@@ -38,11 +62,16 @@ class Equation:
             self.h = (self.b - self.a) / self.n
             self.x = np.linspace(self.a, self.b, self.n + 1)
 
-            if 'sqrt' in self.fx:  # Проверка на наличие sqrt (без учета регистра)
+            if 'sqrt' in self.fx:  # Проверка на наличие sqrt
                 if self.a < 0 or self.b < 0:
                     raise ValueError(
                         "Пределы интегрирования должны быть неотрицательными, "
                         "если функция содержит sqrt.")
+            if 'log' in self.fx:  # Проверка на наличие log
+                if self.a <= 0 or self.b <= 0:
+                    raise ValueError(
+                        "Пределы интегрирования должны быть положительными, "
+                        "если функция содержит log.")
 
             # Вычисляем значения функции для каждого x
             for x_val in self.x:
@@ -57,11 +86,36 @@ class Equation:
         """ Вызов функции подсчета и построения графика, вывод результата """
         result = self.calculate_simpson()
         if result is not None:
-            self.answer_done = ctk.CTkLabel(self.frame, text=f"Ответ: {result:.5f}",
+
+            # Создаем новый фрейм для размещения всех лейблов
+            self.integral_frame = ctk.CTkFrame(self.frame,
+                                               fg_color=self.frame.cget('fg_color'))
+            self.integral_frame.grid(row=6, column=0, columnspan=4, padx=(0, 0))
+
+            # Лейбл для верхнего предела интегрирования
+            self.answer_b = ctk.CTkLabel(self.integral_frame, text=f"{self.b:.1f}",
+                                         font=('Arial Black', 12))
+            self.answer_b.grid(row=0, column=0, padx=(10, 0), sticky="ne")
+
+            # Лейбл для символа интеграла
+            self.answer_int = ctk.CTkLabel(self.integral_frame, text="∫",
+                                           font=('Arial Black', 35))
+            self.answer_int.grid(row=1, column=0, padx=(10, 0), sticky="e")
+
+            # Лейбл для нижнего предела интегрирования
+            self.answer_a = ctk.CTkLabel(self.integral_frame, text=f"{self.a:.1f}",
+                                         font=('Arial Black', 12))
+            self.answer_a.grid(row=2, column=0, padx=(10, 0), sticky="e")
+
+            # Лейбл для функции и результата
+            self.answer_done = ctk.CTkLabel(self.integral_frame,
+                                            text=f"{self.fx} dx, "
+                                                 f"Ответ: {result:.5f}\n",
                                             font=('Arial Black', 18))
-            self.answer_done.grid(row=5, column=0, columnspan=3,
-                                  padx=10, pady=(5, 20), sticky="ew")
+            self.answer_done.grid(row=1, column=1, rowspan=2, sticky="w")
+
             self.plot_function()
+            return f"{result:.5f}", self.integral_frame
 
     def calculate_simpson(self):
         """ Расчет интеграла методом Симпсона """
@@ -92,11 +146,11 @@ class Equation:
         """ Построение графика функции """
         try:
             # Создаем фигуру и график
-            self.fig, self.ax = plt.subplots(figsize=(4, 3.7))
-            self.ax.plot(self.x, self.y, label=self.fx)
-            self.ax.set_xlabel("x")
-            self.ax.set_ylabel("y")
-            self.ax.set_title("График функции")
+            self.fig, self.ax = plt.subplots(figsize=(7, 3))
+            self.ax.plot(self.x, self.y, label=self.fx,
+                         color="#8e84a1", linewidth=2.5)
+
+            self.ax.set_title("График подынтегральной функции")
             self.ax.legend()
             self.ax.grid(True)
 
@@ -109,8 +163,8 @@ class Equation:
             # Создание CanvasTkAgg
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame)
             self.canvas.draw()
-            self.canvas.get_tk_widget().grid(row=6, column=0, columnspan=2,
-                                             sticky='nsew', pady=(0, 10))
+            self.canvas.get_tk_widget().grid(row=7, column=0, columnspan=2,
+                                             sticky='s', pady=(0, 10))
 
             # Настройка размеров фрейма
             self.frame.grid_rowconfigure(6, weight=1)
