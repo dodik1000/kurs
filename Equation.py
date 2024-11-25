@@ -74,7 +74,7 @@ class Equation:
                         "Пределы интегрирования должны быть положительными, "
                         "если функция содержит log.")
 
-            # Вычисляем значения функции для каждого x
+            # Вычисление значения функции для каждого x
             with np.errstate(divide='ignore', invalid='ignore'):
                 for x_val in self.x:
                     self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
@@ -86,8 +86,7 @@ class Equation:
         """ Вызов функции подсчета и построения графика, вывод результата """
         result = self.calculate_simpson()
         if result is not None:
-
-            # Создаем новый фрейм для размещения всех лейблов
+            # Создание нового фрейма для размещения всех лейблов
             self.integral_frame = ctk.CTkFrame(self.frame,
                                                fg_color=self.frame.cget('fg_color'))
             self.integral_frame.grid(row=6, column=0, columnspan=4, padx=(0, 0))

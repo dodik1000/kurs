@@ -17,10 +17,11 @@ class App(ctk.CTk):
         self.resizable(width=False, height=False)
 
         # region: Конфигурация окна
-        self.grid_columnconfigure(1, weight=1)  # Main content area expands
-        self.grid_columnconfigure(0, weight=0)  # Sidebar doesn't expand
-        self.grid_rowconfigure(0, weight=0)  # Menubar doesn't expand vertically
-        self.grid_rowconfigure((1, 2, 3), weight=1)  # Remaining rows expand
+        self.grid_columnconfigure(1,
+                                  weight=1)  # Основная область контента расширяется
+        self.grid_columnconfigure(0, weight=0)  # Боковая панель не расширяется
+        self.grid_rowconfigure(0, weight=0)  # Меню не расширяется по вертикали
+        self.grid_rowconfigure((1, 2, 3), weight=1)  # Расширение строк
 
         # endregion
 
@@ -73,6 +74,7 @@ class App(ctk.CTk):
         self.image_save = Image.open("materials/saveicon.png")
         self.ctk_image_save = ctk.CTkImage(light_image=self.image_save, size=(18, 18))
 
+        # Кнопка "Сохранить"
         self.save_me_button = ctk.CTkButton(self.menu_bar_frame,
                                             image=self.ctk_image_save,
                                             text="Сохранить", fg_color="#7d748e",
@@ -84,6 +86,7 @@ class App(ctk.CTk):
         self.image_open = Image.open("materials/openicon.png")
         self.ctk_image_save = ctk.CTkImage(light_image=self.image_open, size=(18, 18))
 
+        # Кнопка "Открыть"
         self.open_me_button = ctk.CTkButton(self.menu_bar_frame,
                                             image=self.ctk_image_save,
                                             text="Открыть", fg_color="#7d748e",
@@ -94,13 +97,14 @@ class App(ctk.CTk):
 
         # Перегородка между кнопками
         self.separator1 = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
-                                      height=20, fg_color="#7d748e")
+                                       height=20, fg_color="#7d748e")
         self.separator1.grid(row=0, column=2, padx=5)
 
         self.image_clear = Image.open("materials/clearicon.png")
         self.ctk_image_clear = ctk.CTkImage(light_image=self.image_clear,
                                             size=(18, 18))
 
+        # Кнопка "Очистить поля"
         self.clear_me_button = ctk.CTkButton(self.menu_bar_frame,
                                              image=self.ctk_image_clear,
                                              text="Очистить поля", fg_color="#7d748e",
@@ -109,8 +113,9 @@ class App(ctk.CTk):
                                              command=self.clear_me)
         self.clear_me_button.grid(row=0, column=3, padx=5)
 
+        # Перегородка между кнопками
         self.separator2 = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
-                                      height=20, fg_color="#7d748e")
+                                       height=20, fg_color="#7d748e")
         self.separator2.grid(row=0, column=4, padx=5)
 
         self.slider_name = ctk.CTkLabel(self.menu_bar_frame, width=2,
@@ -118,19 +123,22 @@ class App(ctk.CTk):
                                         height=20, font=("Arial Black", 12))
         self.slider_name.grid(row=0, column=5, padx=5)
 
+        # Слайдер для установки количества знаков после запятой в ответе
         self.slider_1 = ctk.CTkSlider(self.menu_bar_frame, from_=1, to=9, width=90,
                                       number_of_steps=8, button_color="#7d748e",
                                       command=self.update_precision,
                                       button_hover_color="#7d748e")
         self.slider_1.grid(row=0, column=6, padx=5)
 
+        # Перегородка между кнопками
         self.separator3 = ctk.CTkLabel(self.menu_bar_frame, text="", width=2,
                                        height=20, fg_color="#7d748e")
-        self.separator3.grid(row=0, column=7, padx=(10,10))
+        self.separator3.grid(row=0, column=7, padx=(10, 10))
 
         self.image_help = Image.open("materials/helpicon.png")
         self.ctk_image_help = ctk.CTkImage(light_image=self.image_help, size=(18, 18))
 
+        # Кнопка "Помощь"
         self.help_me_button = ctk.CTkButton(self.menu_bar_frame,
                                             image=self.ctk_image_help,
                                             text="Помощь", fg_color="#7d748e",
@@ -299,9 +307,10 @@ class App(ctk.CTk):
         self.button_exit.grid(row=0, column=1, padx=10)
         # endregion
 
-        #################################################################
-        # region: CALCULATE FRAME
+        '''------------------- CALCULATE FRAME -------------------'''
 
+        # region: оформление calculate frame
+        # Функция
         self.func_label = (
             ctk.CTkLabel(self.calculate_frame,
                          text="Функция (используйте 'x' как переменную):",
@@ -353,8 +362,9 @@ class App(ctk.CTk):
 
         # endregion
 
-        #################################################################
-        # region: ABOUT AUTHOR FRAME
+        '''------------------- ABOUT AUTHOR FRAME -------------------'''
+
+        # region: оформление about author frame
 
         self.ab_author_label = ctk.CTkLabel(self.about_author_frame,
                                             text="Автор",
@@ -383,9 +393,9 @@ class App(ctk.CTk):
 
         # endregion
 
-        #################################################################
-        # region: ABOUT PROGRAM FRAME
+        '''------------------- ABOUT PROGRAM FRAME -------------------'''
 
+        # region: оформление about program frame
         self.auth_label1 = ctk.CTkLabel(self.about_program_frame,
                                         text="О программе\n\n"
                                              "Вычисление определенных интегралов\n"
@@ -410,6 +420,7 @@ class App(ctk.CTk):
                          font=("Arial Black", 14), wraplength=500, justify="left"))
         self.description_label.grid(row=1, column=1, pady=15)
 
+        # Возможности
         self.features_label = ctk.CTkLabel(self.about_program_frame,
                                            text="Основные возможности:",
                                            font=("Arial Black", 14))
@@ -453,14 +464,16 @@ class App(ctk.CTk):
 
         # endregion
 
-        #################################################################
-        # region: SHOW HELP FRAME
+        '''------------------- SHOW HELP FRAME -------------------'''
 
+        # region: оформление show help frame
         self.auth_label1 = ctk.CTkLabel(self.show_help_frame,
                                         text="Помощь\n",
                                         font=("Arial Black", 18))
         self.auth_label1.grid(row=0, column=0, pady=(30, 5))
-        self.features_text = (
+
+        # Помощь в использовании
+        self.feature_text = (
             ctk.CTkLabel(self.show_help_frame,
                          text="Ввод функций:\n\n1. Степень: \nЧтобы возвести число в "
                               "степень, используйте двойную звездочку (**).\n"
@@ -482,7 +495,7 @@ class App(ctk.CTk):
                               "\n- Логарифмическая функция: `log(x)`",
                          font=("Arial Black", 14), padx=10,
                          wraplength=700, justify="left"))
-        self.features_text.grid()
+        self.feature_text.grid()
 
         # endregion
 
@@ -514,12 +527,14 @@ class App(ctk.CTk):
             self.show_help_frame.configure(fg_color="#f3f3f3")
 
     def switch_frame(self, new_frame):
+        """ Метод для смены фреймов """
         self.after_cancel(self.idle_timer_id)
         self.current_frame.grid_forget()
         new_frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
         self.current_frame = new_frame
 
     def close_program(self):
+        """ Метод для закрытия приложения """
         if self.new_window_deleter is not None:
             self.new_window_deleter.destroy()
         if hasattr(self, 'idle_timer_id'):
@@ -531,6 +546,9 @@ class App(ctk.CTk):
         self.destroy()
 
     def calculate_answer(self):
+        """ Вызывает вычисление ответа и обновляет историю """
+
+        # Удаление предыдущего фрейма с результатами, если он существует
         if self.int_frame_deleter is not None:
             self.int_frame_deleter.grid_forget()
 
@@ -558,6 +576,7 @@ class App(ctk.CTk):
         self.db = None
 
     def continue_session(self):
+        """ Метод для продолжения работы при бездействии пользователя"""
         self.warning_window.destroy()
         if hasattr(self, 'close_timer_id'):
             self.after_cancel(self.close_timer_id)
@@ -610,9 +629,11 @@ class App(ctk.CTk):
             self.close_program()
 
     def update_precision(self, value):
+        """ Метод для обновления количества знаков после запятой в ответе """
         self.precision = int(float(value))
 
     def clear_me(self):
+        """ Метод для очистки полей (кнопка "Очистить поля") """
         self.after_cancel(self.idle_timer_id)
         self.entry_func.delete(0, 'end')
         self.entry_func.insert(0, "")
@@ -624,7 +645,8 @@ class App(ctk.CTk):
         self.entry_n.insert(0, "")
 
     def save_file(self):
-        # Открываем диалоговое окно сохранения файла
+        """ Метод для сохранения полей и ответа (кнопка "Сохранить") """
+        # Открытие диалогового окно сохранения файла
         file_path = filedialog.asksaveasfilename(defaultextension=".txt",
                                                  filetypes=[("Text files", "*.txt")])
         if file_path:
@@ -645,7 +667,7 @@ class App(ctk.CTk):
                                   width=300, height=200, icon="cancel")
                     return
 
-            # Записываем данные в файл
+            # Запись данных в файл
             with open(file_path, 'w', encoding='utf-8') as file:
                 for name, value in fields.items():
                     file.write(f'{name}: {value}\n')
@@ -654,19 +676,20 @@ class App(ctk.CTk):
                               width=300, height=200, icon="check")
 
     def open_file(self):
-        # Открываем диалоговое окно открытия файла
+        """ Метод для открытия файла (кнопка "Открыть") """
+        # Открытие диалогового окно открытия файла
         file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
         if file_path:
             with open(file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
 
-                # Очищаем текущие значения полей ввода
+                # Очищение текущих значений полей ввода
                 self.entry_func.delete(0, ctk.END)
                 self.entry_a.delete(0, ctk.END)
                 self.entry_b.delete(0, ctk.END)
                 self.entry_n.delete(0, ctk.END)
 
-                # Записываем значения в соответствующие поля
+                # Запись значений в соответствующие поля
                 for line in lines:
                     if line.startswith('Функция:'):
                         self.entry_func.insert(0, line.split(':',
