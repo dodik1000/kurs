@@ -12,8 +12,8 @@ class App(ctk.CTk):
 
         '''------------------- НАСТРОЙКА ОКНА -------------------'''
 
-        self.title("Калькулятор")
-        self.geometry("900x700")
+        self.title("Калькулятор для вычисления интегралов методом Симпсона")
+        self.geometry("900x700+450+100")
         self.resizable(width=False, height=False)
 
         # region: Конфигурация окна
@@ -57,8 +57,8 @@ class App(ctk.CTk):
                                                 fg_color="#202020")
         self.menu_bar_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#282828",
                                            height=40, width=900)
-        self.show_help_frame = ctk.CTkFrame(self, corner_radius=0,
-                                            fg_color="#202020")
+        self.show_help_frame = ctk.CTkScrollableFrame(self, corner_radius=0,
+                                                      fg_color="#202020")
         # endregion
 
         # Текущий фрейм
@@ -66,7 +66,7 @@ class App(ctk.CTk):
 
         '''------------------- MENU BAR FRAME -------------------'''
 
-        self.menu_bar_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+
         self.menu_bar_frame.grid_propagate(False)
         self.menu_bar_frame.rowconfigure(0, weight=1)
 
@@ -126,7 +126,9 @@ class App(ctk.CTk):
         # Слайдер для установки количества знаков после запятой в ответе
         self.slider_1 = ctk.CTkSlider(self.menu_bar_frame, from_=1, to=9, width=90,
                                       number_of_steps=8, button_color="#7d748e",
-                                      command=self.update_precision,
+                                      command=lambda value: setattr(self, 'precision',
+                                                                    int(float(
+                                                                        value))),
                                       button_hover_color="#7d748e")
         self.slider_1.grid(row=0, column=6, padx=5)
 
@@ -287,7 +289,7 @@ class App(ctk.CTk):
 
         self.label_year = ctk.CTkLabel(self.main_frame, text="Минск, 2024",
                                        font=("Arial Black", 16))
-        self.label_year.grid(pady=(90, 0))
+        self.label_year.grid(pady=(120, 0))
 
         self.button_frame.grid(sticky="s", pady=(20, 30))
 
@@ -475,26 +477,34 @@ class App(ctk.CTk):
         # Помощь в использовании
         self.feature_text = (
             ctk.CTkLabel(self.show_help_frame,
-                         text="Ввод функций:\n\n1. Степень: \nЧтобы возвести число в "
-                              "степень, используйте двойную звездочку (**).\n"
+                         text="Ввод функций:\n\n1. Степень:\n- Чтобы возвести число в"
+                              " степень, используйте двойную звездочку (**).\n"
                               "Например, для возведения x в квадрат напишите `x**2`."
-                              "\n\n2. Корень: \nДля вычисления квадратного корня "
+                              "\n\n2. Корень: \n- Для вычисления квадратного корня "
                               "используйте функцию `sqrt()`. Например, квадратный "
                               "корень из x: `sqrt(x)`.\n\n3. Математические "
-                              "функции: \nВы можете использовать различные "
+                              "функции: \n- Вы можете использовать различные "
                               "математические функции, такие как `sin()`, `cos()`, "
                               "`tan()`, `log()`, и т.д.\nНапример, синус x: `sin(x)`."
                               "\n\nВвод пределов интегрирования:\n\n1. "
-                              "Нижний предел: \nВведите значение нижнего "
+                              "Нижний предел: \n- Введите значение нижнего "
                               "предела интегрирования в соответствующее поле.\n\n"
-                              "2. Верхний предел: \nВведите значение верхнего "
+                              "2. Верхний предел: \n- Введите значение верхнего "
                               "предела интегрирования в соответствующее поле. "
+                              "\n\n! Обратите внимание: \n- В функциях, содержащих "
+                              "логарифмы `log(x)`, значения x должны быть "
+                              "положительными, чтобы избежать ошибок. \n- В функциях,"
+                              " содержащих квадратные корни `sqrt(x)`, значения x "
+                              "должны быть неотрицательными. \n- В функциях, "
+                              "содержащих обратные тригонометрические функции "
+                              "`arcsin(x)`, `arccos(x)`, значения x должны быть "
+                              "в диапазоне [-1, 1]."
                               "\n\nПримеры ввода функций: "
                               "\n- Полиномиальная функция: `x**3 + 2*x**2 - 5*x + 1` "
                               "\n- Тригонометрическая функция: `sin(x) + cos(x)`"
-                              "\n- Логарифмическая функция: `log(x)`",
+                              "\n- Логарифмическая функция: `log(x)`\n\n\n\n\n",
                          font=("Arial Black", 14), padx=10,
-                         wraplength=700, justify="left"))
+                         wraplength=705, justify="left"))
         self.feature_text.grid()
 
         # endregion
@@ -530,7 +540,12 @@ class App(ctk.CTk):
         """ Метод для смены фреймов """
         self.after_cancel(self.idle_timer_id)
         self.current_frame.grid_forget()
-        new_frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
+        if new_frame == self.calculate_frame:
+            self.menu_bar_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+            new_frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
+        else:
+            self.menu_bar_frame.grid_forget()
+            new_frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
         self.current_frame = new_frame
 
     def close_program(self):
@@ -628,10 +643,6 @@ class App(ctk.CTk):
                 self.after_cancel(self.update_countdown_id)
             self.close_program()
 
-    def update_precision(self, value):
-        """ Метод для обновления количества знаков после запятой в ответе """
-        self.precision = int(float(value))
-
     def clear_me(self):
         """ Метод для очистки полей (кнопка "Очистить поля") """
         self.after_cancel(self.idle_timer_id)
@@ -707,6 +718,7 @@ class App(ctk.CTk):
                 # Проверка значений полей и вывод сообщения об успешной загрузке
                 if (self.entry_func.get() and self.entry_a.get() and
                         self.entry_b.get() and self.entry_n.get()):
+                    self.switch_frame(self.calculate_frame)
                     CTkMessagebox(title="Открыто",
                                   message="Файл успешно импортирован",
                                   width=300, height=200, icon="check")

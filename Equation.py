@@ -79,7 +79,7 @@ class Equation:
                 for x_val in self.x:
                     self.y_value = eval(self.fx, {"x": x_val}, self.local_namespace)
                     self.y.append(self.y_value)
-        except (NameError, ValueError, SyntaxError, TypeError) as e:
+        except (NameError, ValueError, SyntaxError, TypeError, ZeroDivisionError) as e:
             return
 
     def simpson(self):
@@ -108,8 +108,8 @@ class Equation:
 
             # Лейбл для функции и результата
             self.answer_done = ctk.CTkLabel(self.integral_frame,
-                                            text=f"{self.fx} dx, "
-                                                 f"Ответ: {result:.{self.acc}f}\n",
+                                            text=f"{self.fx} dx "
+                                                 f"= {result:.{self.acc}f}\n",
                                             font=('Arial Black', 18))
             self.answer_done.grid(row=1, column=1, rowspan=2, sticky="w")
 
@@ -144,30 +144,34 @@ class Equation:
             return None
 
     def plot_function(self):
-        """ Построение графика функции """
         try:
-            # Создаем фигуру и график
             self.fig, self.ax = plt.subplots(figsize=(7, 3))
             self.ax.plot(self.x, self.y, label=self.fx,
                          color="#8e84a1", linewidth=2.5)
+            plt.title('График подынтегральной функции')
+            plt.xlabel('x')
+            plt.ylabel('f(x)')
+            plt.grid()
 
-            self.ax.set_title("График подынтегральной функции")
-            self.ax.legend()
-            self.ax.grid(True)
+            # Интерактивное изменение числа разбиений
+            n_steps = [self.n + i * 2 for i in range(20)]
+            bars = []
+            for n in n_steps:
 
-            # Удаление предыдущего графика (если он был)
+                y_step = [eval(self.fx, {"x": xi}, self.local_namespace) for xi in
+                          self.x]
+                bar = self.ax.fill_between(self.x, 0, y_step, color="#a9a0b7",
+                                      alpha=0.05)
+                bars.append(bar)
+
             if hasattr(self, "canvas"):
-                self.canvas.grid_forget()
-                self.canvas.figure.clf()  # Очистка фигуры
-                plt.close(self.canvas.figure)  # Закрытие фигуры
+                self.canvas.get_tk_widget().destroy()
 
-            # Создание CanvasTkAgg
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame)
             self.canvas.draw()
             self.canvas.get_tk_widget().grid(row=7, column=0, columnspan=2,
                                              sticky='s', pady=(0, 10))
 
-            # Настройка размеров фрейма
             self.frame.grid_rowconfigure(6, weight=1)
             self.frame.columnconfigure(0, weight=1)
             self.frame.columnconfigure(1, weight=1)
@@ -175,5 +179,5 @@ class Equation:
 
         except Exception as e:
             CTkMessagebox(title="Ошибка",
-                          message=f"Ошибка при построении графика: {e}",
-                          width=300, height=200, icon="cancel")
+                          message=f"Ошибка при построении графика: {e}", width=300,
+                          height=200, icon="cancel")
