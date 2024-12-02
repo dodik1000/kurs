@@ -164,6 +164,7 @@ class Equation:
                                       alpha=0.05)
                 bars.append(bar)
 
+
             if hasattr(self, "canvas"):
                 self.canvas.get_tk_widget().destroy()
 

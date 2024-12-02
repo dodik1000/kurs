@@ -4,6 +4,16 @@ from Equation import Equation
 from Database import Database
 from tkinter import filedialog
 from CTkMessagebox import CTkMessagebox
+import webbrowser
+import os
+import sys
+# Определяем путь к папке с ресурсами
+
+
+def resource_path(relative_path):
+    """ Получить абсолютный путь к ресурсу. Работает для dev и .exe. """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 
 class App(ctk.CTk):
@@ -34,10 +44,11 @@ class App(ctk.CTk):
         self.calculations_result = None
         self.precision = 4
 
-        self.calculations_result = None
-
         # Установка обработчика события закрытия окна
         self.protocol("WM_DELETE_WINDOW", self.close_program)
+        self.bind('<Return>', lambda event: self.calculate_answer())  # Enter
+        self.bind('<Escape>', lambda event: (self.switch_frame(self.main_frame),
+                                          self.sidebar_frame.grid_forget()))  # Esc
 
         # region : Фреймы для различных частей приложения
 
@@ -59,6 +70,10 @@ class App(ctk.CTk):
                                            height=40, width=900)
         self.show_help_frame = ctk.CTkScrollableFrame(self, corner_radius=0,
                                                       fg_color="#202020")
+        self.author_bio_frame = ctk.CTkFrame(self.about_author_frame,
+                                             corner_radius=10, fg_color="#282828")
+        self.support_frame = ctk.CTkFrame(self.about_author_frame, corner_radius=10,
+                                          fg_color="#202020", height=100)
         # endregion
 
         # Текущий фрейм
@@ -66,12 +81,11 @@ class App(ctk.CTk):
 
         '''------------------- MENU BAR FRAME -------------------'''
 
-
         self.menu_bar_frame.grid_propagate(False)
         self.menu_bar_frame.rowconfigure(0, weight=1)
 
         # region: Оформление меню
-        self.image_save = Image.open("materials/saveicon.png")
+        self.image_save = Image.open(resource_path("Materials/saveicon.png"))
         self.ctk_image_save = ctk.CTkImage(light_image=self.image_save, size=(18, 18))
 
         # Кнопка "Сохранить"
@@ -83,7 +97,7 @@ class App(ctk.CTk):
                                             command=self.save_file)
         self.save_me_button.grid(row=0, column=0, padx=(20, 5))
 
-        self.image_open = Image.open("materials/openicon.png")
+        self.image_open = Image.open(resource_path("Materials/openicon.png"))
         self.ctk_image_save = ctk.CTkImage(light_image=self.image_open, size=(18, 18))
 
         # Кнопка "Открыть"
@@ -100,7 +114,7 @@ class App(ctk.CTk):
                                        height=20, fg_color="#7d748e")
         self.separator1.grid(row=0, column=2, padx=5)
 
-        self.image_clear = Image.open("materials/clearicon.png")
+        self.image_clear = Image.open(resource_path("Materials/clearicon.png"))
         self.ctk_image_clear = ctk.CTkImage(light_image=self.image_clear,
                                             size=(18, 18))
 
@@ -137,7 +151,7 @@ class App(ctk.CTk):
                                        height=20, fg_color="#7d748e")
         self.separator3.grid(row=0, column=7, padx=(10, 10))
 
-        self.image_help = Image.open("materials/helpicon.png")
+        self.image_help = Image.open(resource_path("Materials/helpicon.png"))
         self.ctk_image_help = ctk.CTkImage(light_image=self.image_help, size=(18, 18))
 
         # Кнопка "Помощь"
@@ -155,7 +169,7 @@ class App(ctk.CTk):
         '''------------------- SIDEBAR FRAME -------------------'''
 
         # Размещение фрейма
-        self.sidebar_frame.grid(row=1, column=0, rowspan=4, sticky="nsew")
+
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
 
         # region : Размещение кнопок и меток боковой панели
@@ -163,7 +177,8 @@ class App(ctk.CTk):
         self.main_button = ctk.CTkButton(self.sidebar_frame, text="Главная",
                                          fg_color="#7d748e", hover_color="#545164",
                                          command=lambda:
-                                         self.switch_frame(self.main_frame),
+                                         (self.switch_frame(self.main_frame),
+                                          self.sidebar_frame.grid_forget()),
                                          width=147, height=30)
         self.main_button.grid(row=0, column=0, padx=20, pady=(10, 0))
 
@@ -239,74 +254,85 @@ class App(ctk.CTk):
                               "\n\nПрограммное обеспечение информационных "
                               "систем и технологий",
                          font=("Arial Black", 16)))
-        self.label_uni.grid(pady=(10, 60))
+        self.label_uni.grid(row=0, column=0, pady=(10, 60), padx=20, sticky="nsew")
 
         # Название проекта
         self.label_course = ctk.CTkLabel(self.main_frame, text="Курсовой проект",
                                          font=("Arial Black", 24))
-        self.label_course.grid()
+        self.label_course.grid(row=1, column=0, sticky="nsew", padx=20)
+
         self.label_subject = ctk.CTkLabel(self.main_frame,
                                           text="по дисциплине Языки программирования",
                                           font=("Arial Black", 16))
-        self.label_subject.grid()
+        self.label_subject.grid(row=2, column=0, sticky="nsew", padx=20, pady=7)
 
         # Название темы курсового проекта
         self.label_theme = ctk.CTkLabel(self.main_frame,
                                         text="Вычисление определенных "
                                              "интегралов методом Симпсона",
                                         font=("Arial Black", 20))
-        self.label_theme.grid(pady=(0, 30))
+        self.label_theme.grid(row=3, column=0, pady=(0, 30), sticky="nsew", padx=20)
 
         # Загрузка изображения
-        self.image = Image.open("materials/integral_calculator.png")
-        self.ctk_image = ctk.CTkImage(light_image=self.image, size=(150, 150))
+        self.image = Image.open(resource_path("Materials/integral_calculator.png"))
+        self.logo_image = ctk.CTkImage(light_image=self.image, size=(150, 150))
 
-        self.group_frame.grid()
+        self.group_frame.grid(row=4, column=0, sticky="nsew")
 
         self.label_student = ctk.CTkLabel(self.group_frame,
                                           text="Выполнил: Студент группы 10701123",
                                           font=("Arial Black", 16))
-        self.label_student.grid(row=0, column=1, sticky="w")
+        self.label_student.grid(row=0, column=1, sticky="w", padx=20)
 
         self.label_student_name = ctk.CTkLabel(self.group_frame,
                                                text="Макаров Артём Сергеевич",
                                                font=("Arial Black", 16))
-        self.label_student_name.grid(row=1, column=1, sticky="w")
+        self.label_student_name.grid(row=1, column=1, sticky="w", padx=20)
 
         self.teach = ctk.CTkLabel(self.group_frame,
-                                  text="Преподователь: к.ф.-м.н., доц.",
+                                  text="Преподаватель: к.ф.-м.н., доц.",
                                   font=("Arial Black", 16))
-        self.teach.grid(row=2, column=1, sticky="w")
+        self.teach.grid(row=2, column=1, sticky="w", padx=20)
 
         self.teach_name = ctk.CTkLabel(self.group_frame,
                                        text="Сидорик Валерий Владимирович",
                                        font=("Arial Black", 16))
-        self.teach_name.grid(row=3, column=1, sticky="w")
+        self.teach_name.grid(row=3, column=1, sticky="w", padx=20)
 
-        self.label_image = ctk.CTkLabel(self.group_frame, image=self.ctk_image,
+        self.label_image = ctk.CTkLabel(self.group_frame, image=self.logo_image,
                                         text="")
-        self.label_image.grid(row=0, column=0, rowspan=4, padx=100)
+        self.label_image.grid(row=0, column=0, rowspan=4, padx=(180, 130), sticky="e")
 
         self.label_year = ctk.CTkLabel(self.main_frame, text="Минск, 2024",
                                        font=("Arial Black", 16))
-        self.label_year.grid(pady=(120, 0))
+        self.label_year.grid(row=5, column=0, pady=(120, 0), sticky="nsew", padx=20)
 
-        self.button_frame.grid(sticky="s", pady=(20, 30))
+        self.button_frame.grid(row=6, column=0, sticky="nsew", pady=(20, 30))
 
         self.button_continue = ctk.CTkButton(self.button_frame,
                                              text="Далее", fg_color="#7d748e",
                                              hover_color="#545164", width=300,
                                              height=50, font=("Arial Black", 16),
                                              command=lambda:
-                                             self.switch_frame(self.calculate_frame))
-        self.button_continue.grid(row=0, column=0, padx=10)
+                                             (self.switch_frame(self.calculate_frame),
+                                              self.sidebar_frame.grid(row=1, column=0,
+                                                                      rowspan=4,
+                                                                      sticky="nsew")))
+        self.button_continue.grid(row=0, column=0, padx=10, sticky="nsew")
 
         self.button_exit = ctk.CTkButton(self.button_frame, text="Выход",
                                          fg_color="#7d748e", hover_color="#545164",
                                          width=300, height=50,
                                          font=("Arial Black", 16),
                                          command=self.close_program)
-        self.button_exit.grid(row=0, column=1, padx=10)
+        self.button_exit.grid(row=0, column=1, padx=10, sticky="nsew")
+
+        # Центровка текстовых элементов и фреймов
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        self.group_frame.grid_columnconfigure(1, weight=1)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.button_frame.grid_columnconfigure(1, weight=1)
+
         # endregion
 
         '''------------------- CALCULATE FRAME -------------------'''
@@ -367,31 +393,78 @@ class App(ctk.CTk):
         '''------------------- ABOUT AUTHOR FRAME -------------------'''
 
         # region: оформление about author frame
+        self.author_bio_frame.grid(row=0, column=0, pady=(10, 0), padx=20, rowspan=7)
 
-        self.ab_author_label = ctk.CTkLabel(self.about_author_frame,
+        self.ab_author_label = ctk.CTkLabel(self.author_bio_frame,
                                             text="Автор",
                                             font=("Arial Black", 20))
-        self.ab_author_label.grid(row=0, column=1, padx=200,
+        self.ab_author_label.grid(row=0, column=0, padx=20,
                                   pady=(15, 15), sticky="nsew")
 
-        self.image_author = Image.open("materials/author.jpg")
+        self.image_author = Image.open(resource_path("Materials/author2.jpg"))
         self.ctk_image3 = ctk.CTkImage(light_image=self.image_author, size=(280, 280))
-        self.label_image3 = ctk.CTkLabel(self.about_author_frame,
+        self.label_image3 = ctk.CTkLabel(self.author_bio_frame,
                                          image=self.ctk_image3, text="")
-        self.label_image3.grid(row=1, column=1, padx=10, sticky="nsew")
+        self.label_image3.grid(row=1, column=0, padx=20, sticky="nsew")
 
-        self.auth_label1 = ctk.CTkLabel(self.about_author_frame,
+        self.auth_label1 = ctk.CTkLabel(self.author_bio_frame,
                                         text="Студент группы 10701123"
                                         "\n\nМакаров Артём Сергеевич"
-                                        "\n\nartemmakarovv05@gmail.com",
-                                        font=("Arial Black", 18))
-        self.auth_label1.grid(row=2, column=1, padx=200, pady=(30, 5), sticky="nsew")
+                                        "\n\nartemmakarovv05@gmail.com\n",
+                                        font=("Arial Black", 16))
+        self.auth_label1.grid(row=2, column=0, padx=20, pady=(30, 5), sticky="nsew")
 
-        self.image2 = Image.open("materials/bntu.png")
-        self.ctk_image2 = ctk.CTkImage(light_image=self.image2, size=(180, 180))
-        self.label_image2 = ctk.CTkLabel(self.about_author_frame,
-                                         image=self.ctk_image2, text="")
-        self.label_image2.grid(row=3, column=1, padx=10,  sticky="nsew")
+        self.obomne_label = ctk.CTkLabel(self.about_author_frame, text="Обо мне",
+                                         font=("Arial black", 18))
+        self.obomne_label.grid(row=1, column=1, padx=20, pady=20, sticky="w")
+
+        self.obomne1_label = ctk.CTkLabel(self.about_author_frame,
+                                          text="Привет, Пользователь! \n\n"
+                                               "Меня зовут Артём, и я студент"
+                                               " Белорусского национального "
+                                               "технического университета. "
+                                               "Я увлекаюсь программированием и "
+                                               "постоянно стремлюсь к изучению "
+                                               "новых технологий и методов "
+                                               "разработки.\n\n"
+                                               "Эта программа является частью моего"
+                                               " курсового проекта по дисциплине "
+                                               "'Языки программирования'. "
+                                               "Надеюсь, вам понравится работать с "
+                                               "этим приложением так же, как мне "
+                                               "понравилось его создавать.",
+                                          font=("Arial Black", 14), justify="left",
+                                          wraplength=300)
+        self.obomne1_label.grid(row=2, column=1, padx=20, pady=(20, 10))
+
+        # Создаем фрейм для кнопок
+        self.support_frame.grid_propagate(False)
+        self.support_frame.grid(row=3, column=1, pady=10, padx=5, sticky="nw")
+
+        self.image_IG = Image.open(resource_path("Materials/ig.png"))
+        self.ctk_image_ig = ctk.CTkImage(light_image=self.image_IG, size=(25, 25))
+        # Кнопка "Instagram"
+        self.ig_profile = ctk.CTkButton(self.support_frame,
+                                        image=self.ctk_image_ig,
+                                        text="Instagram", fg_color="#7d748e",
+                                        hover_color="#545164", width=150,
+                                        height=30, font=("Arial black", 14),
+                                        command=lambda:
+                                        self.open_link(
+                                            'https://www.instagram.com/side00x/'))
+        self.ig_profile.grid(row=0, column=0, padx=10, pady=15)
+
+        # Кнопка "Telegram"
+        self.image_tg = Image.open(resource_path("Materials/tg.png"))
+        self.ctk_image_tg = ctk.CTkImage(light_image=self.image_tg, size=(25, 25))
+        self.tg_profile = ctk.CTkButton(self.support_frame,
+                                        image=self.ctk_image_tg,
+                                        text="Telegram", fg_color="#7d748e",
+                                        hover_color="#545164", width=150,
+                                        height=30, font=("Arial black", 14),
+                                        command=lambda:
+                                        self.open_link('https://t.me/morechaos'))
+        self.tg_profile.grid(row=1, column=0, padx=10)
 
         # endregion
 
@@ -405,7 +478,7 @@ class App(ctk.CTk):
                                         font=("Arial Black", 18))
         self.auth_label1.grid(row=0, column=0, pady=(10, 30))
         self.about_program_group.grid(row=1, column=0, padx=10, sticky="nsew")
-        self.image3 = Image.open("materials/about.png")
+        self.image3 = Image.open(resource_path("Materials/about.png"))
         self.ctk_image3 = ctk.CTkImage(light_image=self.image3, size=(180, 160))
         self.label_image3 = ctk.CTkLabel(self.about_program_group,
                                          image=self.ctk_image3, text="")
@@ -523,6 +596,8 @@ class App(ctk.CTk):
             self.about_program_group.configure(fg_color="#202020")
             self.menu_bar_frame.configure(fg_color="#282828")
             self.show_help_frame.configure(fg_color="#202020")
+            self.author_bio_frame.configure(fg_color="#282828")
+            self.support_frame.configure(fg_color="#202020")
         elif theme == "Светлая":
             ctk.set_appearance_mode("Light")
             self.main_frame.configure(fg_color="#f3f3f3")
@@ -535,6 +610,8 @@ class App(ctk.CTk):
             self.about_program_group.configure(fg_color="#f3f3f3")
             self.menu_bar_frame.configure(fg_color="#E8E8E8")
             self.show_help_frame.configure(fg_color="#f3f3f3")
+            self.author_bio_frame.configure(fg_color="#E8E8E8")
+            self.support_frame.configure(fg_color="#f3f3f3")
 
     def switch_frame(self, new_frame):
         """ Метод для смены фреймов """
@@ -726,6 +803,9 @@ class App(ctk.CTk):
                     CTkMessagebox(title="Ошибка",
                                   message="Некоторые поля были заполнены некорректно",
                                   width=300, height=200, icon="cancel")
+
+    def open_link(self, url):
+        webbrowser.open(url)
 
 
 if __name__ == "__main__":

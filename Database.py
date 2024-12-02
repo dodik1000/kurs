@@ -1,16 +1,40 @@
 import customtkinter as ctk
 from openpyxl import load_workbook
 from CTkMessagebox import CTkMessagebox
+import os
+import sys
 
 """ Класс для работы с базой данных Excel """
+
+
+# Определяем путь к ресурсу
+def resource_path(relative_path):
+    """ Получить абсолютный путь к ресурсу. Работает для dev и .exe. """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 
 class Database:
     def __init__(self, parent, fx, a, b, n):
         """ Инициализация базы данных """
-        self.fn = 'materials/database.xlsx'
+        # Определяем расположение файла базы данных
+        self.fn = os.path.join(os.path.dirname(sys.executable), 'database.xlsx')
+
+        # Если база данных не существует, создайте новую
+        if not os.path.exists(self.fn):
+            from openpyxl import Workbook
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Sheet1"
+            # Добавляем заголовки (если нужно)
+            ws.append(["Функция", "Нижний предел", "Верхний предел", "Точки",
+                       "", "Счётчик"])
+            wb.save(self.fn)
+
         self.wb = load_workbook(self.fn)
         self.ws = self.wb['Sheet1']
+
+
         self.new_window = None
         self.parent = parent
         self.fx = fx
@@ -21,19 +45,22 @@ class Database:
 
     def load_history_data(self):
         """ Чтение данных из Excel файла """
-        for i, row in enumerate(self.ws.iter_rows(min_row=2, max_row=11)):
-            if i < len(self.history_frames):
-                fx = row[0].value
-                a = row[1].value
-                b = row[2].value
-                n = row[3].value
+        try:
+            for i, row in enumerate(self.ws.iter_rows(min_row=2, max_row=11)):
+                if i < len(self.history_frames):
+                    fx = row[0].value
+                    a = row[1].value
+                    b = row[2].value
+                    n = row[3].value
 
-                # Обновление текста лейбла
-                history_label, _ = self.history_frames[i]
-                history_label.configure(text=f"f(x) = {fx}\n"
-                                             f"a = {a}\nb = {b}\nn = {n}\n")
+                    # Обновление текста лейбла
+                    history_label, _ = self.history_frames[i]
+                    history_label.configure(text=f"f(x) = {fx}\n"
+                                                 f"a = {a}\nb = {b}\nn = {n}\n")
 
-        self.wb.close()
+            self.wb.close()
+        except Exception as e:
+            print(f"Ошибка при загрузке данных из базы: {e}")
 
     def history_window(self):
         """ Создание окна истории """
@@ -73,7 +100,7 @@ class Database:
             self.history_button = ctk.CTkButton(self.history_frame, text="Выбрать",
                                                 font=("Arial Black", 12),
                                                 command=lambda idx=i:
-                                                self.fill_input_fields(idx),
+                                                self.fill_input_field(idx),
                                                 fg_color="#7d748e",
                                                 hover_color="#545164", width=80)
             self.history_button.grid(row=0, column=1, padx=10, pady=10, sticky="e")
@@ -113,11 +140,11 @@ class Database:
         for history_label, _ in self.history_frames:
             history_label.configure(text="")
 
-    def fill_input_fields(self, button_index):
+    def fill_input_field(self, b_index):
         """ Заполнение полей в calculate_frame данными из истории """
-        if button_index < len(self.history_frames):
-            row = list(self.ws.iter_rows(min_row=button_index + 2,
-                                         max_row=button_index + 2))
+        if b_index < len(self.history_frames):
+            row = list(self.ws.iter_rows(min_row=b_index + 2,
+                                         max_row=b_index + 2))
             if row:
                 r = row[0]
                 self.fx = r[0].value
